@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="sWeight" Id="{a3e7cef3-21f6-4110-9f53-6cbcafd2ba42}">
+    <Declaration><![CDATA[TYPE sWeight :
+STRUCT
+	pv : LREAL := -10000.0;
+	status : string(15) := 'Invalid';
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

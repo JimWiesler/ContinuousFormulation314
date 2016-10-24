@@ -1,0 +1,55 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="sMasterflexPort" Id="{8e440c8d-61c1-4249-8db6-3dcbacc580ea}">
+    <Declaration><![CDATA[TYPE sMasterflexPort :
+STRUCT
+	// I/O variables for a EL6001 terminal
+	stIn_Port AT %I*	: EL6inData22B;	// linked to the EL6002 in the TwinCAT System Manager
+	stOut_Port AT %Q*	: EL6outData22B; // linked to the EL6002 in the TwinCAT System Manager
+	
+	//Serial send variables
+	sSendString: STRING(100) := '';
+
+	//Receive variables
+	bReceiveTimeout	: BOOL := FALSE;
+	sRxSuffix : STRING(5) := '';
+	nReceiveCounter	: UDINT := 0;
+	sLastReceivedString: STRING(30) := '';
+	bListening : BOOL := FALSE;
+	tListenTON : TON;
+	
+	//Pump Status
+	fSpeedPV : LREAL := -100.0;
+	fFlowPV : LREAL := 0.0;		//Calculated flow in mg/min
+	fSpeedSP : LREAL := -100.0;
+	fFlowSP : LREAL := -100.0;
+	bRun : BOOL := FALSE;
+	bLocal : BOOL := FALSE;
+	bDirection : BOOL := TRUE; //true is positive/forward, false is negative/backwards
+	nPumpStatus : INT := -1; //see http://www.coleparmer.com/Assets/manual_pdfs/07551-20,30.pdf pg 3-33
+	nCommStatus : INT := -1;
+	
+	//Pump Requests
+	fSpeedSP_RQ : LREAL := 0.0;
+	fFlowSP_RQ : LREAL := -100.0;
+	nRun_RQ : INT := 0;  //-1=no RQ, 0=Stop, 1=Run
+	nDir_RQ : INT := -1;  //-1=no RQ, 0=Backwards, 1=Forwards //TODO this does no twork correctly probably. Pump must be stopped to change direction
+	nLocal_RQ : INT := 1; //-1=no RQ, 0=Remote, 1=Local
+
+	//State Control Information
+	nLastState : INT := 1;
+	nState : INT := 1;
+	
+	//Pump Configuration
+	//Tube Sizes: 13 (.8mm, 1/32"), 14 (1.6mm, 1/16"), 16 (3.1mm, 1/8"), 
+	//			  25 (4.8mm, 3/16"), 17 (6.4mm, 1/4"), 18 (7.9mm, 5/16")
+	nTubeSize :INT := 13;		//Tube Number
+	nHeads : INT := 2;			//Number of heads
+	fPeriodMS : LREAL := 0.0;	//Period between pulses in milliseconds
+	
+	
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

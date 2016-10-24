@@ -1,0 +1,40 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="MasterflexSpeed2Flow" Id="{3ff8a6d8-fa8f-4abc-b09e-9b76a81e96ee}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION MasterflexSpeed2Flow : LREAL
+VAR_INPUT
+	speed : LREAL;
+	sPort : sMasterflexPort;
+END_VAR
+VAR
+	b : LREAL;
+	m : LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[b := 0.0;
+CASE sPort.nTubeSize OF
+	13:
+//		m := 0.1237/2.0; b := 0.4136/2.0;    //Experimental data - Dean Hale, 
+		m := 0.125/2.0; b := 0.0; 			 //Experimental data, 0 intercept - Dean Hale, 
+	14:
+		m := 130.0/600.0; //from Masterflex data
+	16:
+//		m := 1.7258/2.0; b := -10.2217/2.0;  //Experimental data - Dean Hale, 
+		m := 1.6869/2.0; b := 0.0; 			 //Experimental data, 0 intercept - Dean Hale, 
+	17:
+		m := 1700.0/600.0; //from Masterflex data
+	18:
+		m := 2300.0/600.0; //from Masterflex data
+	25:
+		m := 1000.0/600.0; //from Masterflex data
+	135:
+		m := 88.4/600.0; //extrapolated from Masterflex data
+	ELSE
+		m := 0.0;
+END_CASE
+MasterflexSpeed2Flow := ((m * speed) + b) * INT_TO_LREAL(sPort.nHeads);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

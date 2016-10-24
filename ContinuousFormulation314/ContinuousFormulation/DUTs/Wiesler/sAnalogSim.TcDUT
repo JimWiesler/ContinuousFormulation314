@@ -1,0 +1,12 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="sAnalogSim" Id="{a5ed2743-07cc-440b-b482-0c8ef0cd086e}">
+    <Declaration><![CDATA[TYPE sAnalogSim :
+STRUCT
+	simEnable : BOOL := FALSE;
+	simValue : LREAL := 0.0;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

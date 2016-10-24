@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <ImagePool Name="ImagePool" Id="{5ab0c558-d2ad-4730-8908-df7336783725}">
+    <XmlArchive>
+      <Data>
+        <o xml:space="preserve" t="ImagePoolObject">
+          <v n="UniqueIdGenerator">"52"</v>
+          <l n="BitmapPool" t="ArrayList" cet="ImagePoolItem">
+            <o>
+              <v n="BitmapID">"pump"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\pump.jpg"</v>
+              <v n="ItemID">15</v>
+            </o>
+            <o>
+              <v n="BitmapID">"static mixer"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\Static-Mixer-Edit.png"</v>
+              <v n="ItemID">16</v>
+            </o>
+            <o>
+              <v n="BitmapID">"valve"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\valve.png"</v>
+              <v n="ItemID">17</v>
+            </o>
+            <o>
+              <v n="BitmapID">"valve inverted"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\valve - Copy.png"</v>
+              <v n="ItemID">18</v>
+            </o>
+            <o>
+              <v n="BitmapID">"pipe"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\Drawing2.jpg"</v>
+              <v n="ItemID">19</v>
+            </o>
+            <o>
+              <v n="BitmapID">"pipe2"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\Drawing2 - Copy.jpg"</v>
+              <v n="ItemID">20</v>
+            </o>
+            <o>
+              <v n="BitmapID">"base"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\base.png"</v>
+              <v n="ItemID">23</v>
+            </o>
+            <o>
+              <v n="BitmapID">"transmitter"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\transmitter2.png"</v>
+              <v n="ItemID">26</v>
+            </o>
+            <o>
+              <v n="BitmapID">"inverted transmitter"</v>
+              <v n="FileID">"5ce3da45-db07-42e7-a21c-a00fff4ed8f6|C:\Users\eb62486\Desktop\temp\ContinuousFormulation314\base\transmitter2 - Copy.png"</v>
+              <v n="ItemID">33</v>
+            </o>
+            <o>
+              <v n="BitmapID">""</v>
+              <v n="FileID">""</v>
+              <v n="ItemID">36</v>
+            </o>
+          </l>
+          <v n="GuidInit">{1cb26be2-1f51-4b6c-aa71-492530de287c}</v>
+          <v n="GuidReInit">{63e47c47-577f-4191-baf8-7f2a1d49ff07}</v>
+          <v n="GuidExitX">{8900ce02-197f-453d-b0c8-00a1d92eaaf2}</v>
+          <v n="ValidIds">true</v>
+        </o>
+      </Data>
+      <TypeList>
+        <Type n="ArrayList">System.Collections.ArrayList</Type>
+        <Type n="Boolean">System.Boolean</Type>
+        <Type n="Guid">System.Guid</Type>
+        <Type n="ImagePoolItem">{215b2719-0347-4e4d-ba85-8bcd66946f66}</Type>
+        <Type n="ImagePoolObject">{bb0b9044-714e-4614-ad3e-33cbdf34d16b}</Type>
+        <Type n="Int32">System.Int32</Type>
+        <Type n="String">System.String</Type>
+      </TypeList>
+    </XmlArchive>
+  </ImagePool>
+</TcPlcObject>

@@ -1,0 +1,15 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="sAI_SCALE" Id="{13a79b9c-b610-4891-a145-99a94036c64b}">
+    <Declaration><![CDATA[TYPE sAI_SCALE :
+STRUCT
+	rawLo: DINT := 0;
+	rawHi: DINT := 32767;
+	pvLo: LREAL := 0.0;
+	pvHi: LREAL := 100.0;
+	eu: STRING[20] := '%';
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

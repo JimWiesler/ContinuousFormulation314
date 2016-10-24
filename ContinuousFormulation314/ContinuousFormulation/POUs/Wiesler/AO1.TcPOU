@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.4019.2">
+  <POU Name="AO1" Id="{a97a180c-45ce-4007-b04b-9010ae57638d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK AO1
+VAR_INPUT
+	out : LREAL;
+	rawStatus : INT;
+	scale : sEU_SCALE;
+	sim : sAnalogSim;
+END_VAR
+VAR_OUTPUT
+	rawOut : INT := 0;
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF sim.simEnable THEN
+	rawOut := scale.rawLo + LREAL_TO_INT((sim.simValue - scale.euLo)*(scale.rawHi - scale.rawLo)/(scale.euHi - scale.euLo));
+ELSE
+	rawOut := scale.rawLo + LREAL_TO_INT((out - scale.euLo)*(scale.rawHi - scale.rawLo)/(scale.euHi - scale.euLo));
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

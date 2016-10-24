@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="AI" Id="{a83bfde0-6770-4f51-9077-2b18aa4871e1}">
+    <Declaration><![CDATA[TYPE AI :
+STRUCT
+	// IO variables: status and value
+	raw AT %I* : INT;
+	status AT %I* : INT;
+	// AI scaling and simulation
+	scale : sEU_SCALE := (euLo := 0,  euHi := 100.0, eu := 'mg/min');
+	sim : sAnalogSim;
+	// PV and filtered PV
+	pv : LREAL := -1000.0;
+	pvfilt : LREAL := -1000.0;
+	//Low cutoff 
+	loCutEnable : BOOL := FALSE; //low cutoff enable
+	loCut : LREAL := 0.0; // if pv is less than this, set pv to 0.0
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

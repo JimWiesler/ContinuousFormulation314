@@ -1,0 +1,16 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="MovingAverage" Id="{480e79f9-4056-4a56-8f19-98c49e2f207a}">
+    <Declaration><![CDATA[TYPE MovingAverage :
+STRUCT
+	arrSize : UINT := 3000; //Do not change online.
+	start : UINT := arrSize - 1;
+	vals : ARRAY[0..start] OF LREAL := [arrSize(0.0)];
+	size : UINT := 1000;
+	in : LREAL;
+	out : LREAL;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -1,0 +1,20 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="testResults" Id="{4cd213df-7349-4a4b-8e95-eb14e840a083}">
+    <Declaration><![CDATA[TYPE testResults :
+STRUCT
+	P9999Arpm : LREAL := 0.0;
+	P9999Atubing : INT := 0;
+	P9999Brpm : LREAL := 0.0;
+	P9999Btubing : INT := 0;
+	FQ9999A : LREAL := 0.0;
+	FQ9999B : LREAL := 0.0;
+	FQ9999C : LREAL := 0.0;
+	FT9999Aavg : LREAL := 0.0;
+	FT9999Bavg : LREAL := 0.0;
+	FT9999Cavg : LREAL := 0.0;
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

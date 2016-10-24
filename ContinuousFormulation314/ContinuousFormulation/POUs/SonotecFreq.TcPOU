@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="SonotecFreq" Id="{cf3cb695-b8a6-4748-9967-bdd46f426900}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK SonotecFreq
+VAR_INPUT
+	rawCount  AT %I* : UDINT;
+	scale : sEU_SCALE := (rawLo := 0, rawHi := 20, euLo := -20.0,  euHi := 500.0, eu := 'ml/min');
+END_VAR
+VAR_OUTPUT
+	pv : LREAL;
+END_VAR
+VAR
+	lastCount : UDINT := 0;
+	thisCount : INT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[thisCount := UDINT_TO_INT(rawCount - lastCount);
+lastcount := rawCount;
+
+pv := scale.euLo + (thisCount - scale.rawLo)*(scale.euHi - scale.euLo)/(scale.rawHi - scale.rawLo);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

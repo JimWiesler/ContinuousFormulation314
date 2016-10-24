@@ -1,0 +1,26 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fbGetUnixTime" Id="{622c589a-9bf2-409f-8b34-a1d4563a7481}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fbGetUnixTime
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+    fbSystemTime : GETSYSTEMTIME;
+    timeAsFileTime : T_FILETIME;
+    timeAsSystemTime : TIMESTRUCT;
+	timeAsDT : DT;
+	timeAsULINT : ULINT;	
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[fbSystemTime(timeLoDW=>timeAsFileTime.dwLowDateTime, timeHiDW=>timeAsFileTime.dwHighDateTime);
+timeAsSystemTime := FILETIME_TO_SYSTEMTIME(timeAsFileTime); //to get milliseconds
+timeAsDT := FILETIME_TO_DT( timeAsFileTime );  //DT is only seconds, no MS component
+unixTime := DT_TO_ULINT(timeAsDT) * 1000 + timeAsSystemTime.wMilliseconds; //global variable
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

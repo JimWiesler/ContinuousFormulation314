@@ -1,0 +1,24 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="AI1" Id="{f5c2ecba-c3ba-4c10-ab1c-966a6551ac20}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK AI1
+VAR_IN_OUT
+	ai : AI;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF ai.sim.simEnable THEN
+	ai.pv := ai.sim.simValue;
+ELSE
+	ai.pv := ai.scale.euLo + (ai.raw - ai.scale.rawLo)*(ai.scale.euHi - ai.scale.euLo)/(ai.scale.rawHi - ai.scale.rawLo);
+	IF ai.loCutEnable AND ai.pv < ai.loCut THEN
+		ai.pv := 0.0;
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

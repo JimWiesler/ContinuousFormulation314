@@ -1,0 +1,31 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FQ1" Id="{1f06e44e-66ca-4c7a-9f49-0147f047c945}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FQ1
+VAR_INPUT
+	enable : BOOL := TRUE;
+	resetRQ : BOOL := FALSE;
+	flow : LREAL := 0.0;
+	timeBaseMS : LREAL := 1000.0*60.0;
+END_VAR
+VAR_IN_OUT
+END_VAR
+VAR_OUTPUT
+	total : LREAL := 0.0;
+END_VAR
+VAR
+	scanMS : LREAL := 1.0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF resetRQ THEN
+	total := 0.0;
+	resetRQ := FALSE;
+ELSE
+	IF enable THEN
+		total := total + flow*scanMS/timeBaseMS;		
+	END_IF
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

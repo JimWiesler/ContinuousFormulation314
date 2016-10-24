@@ -1,0 +1,230 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="MAIN" Id="{ef40301a-07cc-419a-94a7-572c9743ae72}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM MAIN
+
+VAR CONSTANT
+	SAMPLE_SIZE : INT := 1000;
+END_VAR
+
+VAR_INPUT
+	logActive : BOOL := FALSE;
+	MTSendString : STRING(132) := 'SIR$0D$0A';
+	//Pump control
+	P9999A : sMasterflexPort := (bDirection := FALSE, nTubeSize := 13);
+	P9999B : sMasterflexPort := (bDirection := FALSE, nTubeSize := 16);
+	//totalizer blocks
+	fbFQ9999A : FQ1;
+	fbFQ9999B : FQ1;
+	fbFQ9999C : FQ1;
+		
+	
+END_VAR
+
+VAR
+	heartbeat : DINT;
+	fbGetUnixTimeGlobal : fbGetUnixTime;
+	
+	MTWeight : sWeight;
+	
+	//Flowmeters
+	FT9999A : AI := (loCutEnable:= FALSE, loCut := 0.25, scale := (euLo := -20.0,  euHi := 100.0, eu := 'ml/min')); //E+H small
+	FT9999B : AI := (loCutEnable:= TRUE, loCut := 2.25, scale := (euLo := 0,  euHi := 1000.0, eu := 'ml/min')); //E+H large
+	FT9999C : AI := (scale := (euLo := -20,  euHi := 500.0, eu := 'mg/min')); //Sonoflow
+	
+	//Pressures
+	PT9999A : AI := (scale := (euLo := 0,  euHi := 15.0, eu := 'psig'));
+	PT9999B : AI := (scale := (euLo := 0,  euHi := 15.0, eu := 'psig'));
+	PT9999C : AI := (scale := (euLo := 0,  euHi := 15.0, eu := 'psig'));
+
+	//Optek
+	AT9999OPCONC : AI := (scale := (euLo := -0.1,  euHi := 1.1, eu := 'mg/ml'));
+	AT9999OP300  : AI := (scale := (euLo := -0.1,  euHi := 2.0, eu := 'AU'));
+	AT9999OP313  : AI := (scale := (euLo := -0.1,  euHi := 0.5, eu := 'AU'));
+	AT9999OPDIFF : AI := (scale := (euLo := -0.1,  euHi := 2.0, eu := 'AU'));
+
+	//Reveal
+	AT9999RV290 : AI := (scale := (euLo := -0.1,  euHi := 2.0, eu := 'AU'));
+	AT9999RV300 : AI := (scale := (euLo := -0.1,  euHi := 1.1, eu := 'mg/ml'));
+	AT9999RV310 : AI := (scale := (euLo := 0,  euHi := 2.0, eu := 'AU'));
+	AT9999RV320 : AI := (scale := (euLo := 0,  euHi := 2.0, eu := 'AU'));
+
+	//ColorWise
+	AT9999CWx  : AI := (scale := (rawLo := 0, rawHi := 16383, euLo := 0,  euHi := 1.0, eu := 'x'));
+	AT9999CWy  : AI := (scale := (rawLo := 0, rawHi := 16383, euLo := 0,  euHi := 1.0, eu := 'y'));
+	AT9999CWYY : AI := (scale := (rawLo := 0, rawHi := 16383, euLo := 0,  euHi := 1.0, eu := 'Y'));
+
+	//function blocks
+	fbP9999A : fbMasterflex;
+	fbP9999B : fbMasterflex;
+	//AI blocks
+	fbFT9999A : AI1;
+	fbFT9999B : AI1;
+	fbFT9999C : AI1;
+	fbPT9999A : AI1;
+	fbPT9999B : AI1;
+	fbPT9999C : AI1;
+	fbAT9999OPCONC : AI1;
+	fbAT9999OP300  : AI1;
+	fbAT9999OP313  : AI1;
+	fbAT9999OPDIFF : AI1;
+	fbAT9999RV290 : AI1;
+	fbAT9999RV300 : AI1;
+	fbAT9999RV310 : AI1;
+	fbAT9999RV320 : AI1;
+	fbAT9999CWx  : AI1;
+	fbAT9999CWy  : AI1;
+	fbAT9999CWYY : AI1;
+	
+	//ultrasonic frequency input
+	fbFT9999Cfq : SonotecFreq;
+	
+	// filter blocks
+	fbFT9999AFilt : fbMovingAverage;
+	FT9999ASize : UINT := 1000;
+	fbFT9999BFilt : fbMovingAverage;
+	FT9999BSize : UINT := 1000;
+	fbFT9999CFilt : fbMovingAverage;
+	FT9999CSize : UINT := 1000;
+	fbFT9999CfqFilt : fbMovingAverage;
+	FT9999CfqSize : UINT := 5;
+	FT9999CfqPV : lreal;
+	
+	//Data logging
+	fbP9999ARPMlog : fbDatalogger_100ms;
+	fbP9999AFlowlog : fbDatalogger_100ms;
+	fbP9999BRPMlog : fbDatalogger_100ms;
+	fbP9999BFlowlog : fbDatalogger_100ms;
+		
+	fbFT9999Alog : fbDatalogger_1ms;
+	fbFT9999Blog : fbDatalogger_1ms;
+	fbFT9999Clog : fbDatalogger_1ms;
+	fbFT9999Cfqlog : fbDatalogger_1ms;
+	
+	fbFT9999Afiltlog : fbDatalogger_100ms;
+	fbFT9999Bfiltlog : fbDatalogger_100ms;
+	fbFT9999Cfiltlog : fbDatalogger_100ms;
+	
+	fbFQ9999Alog : fbDatalogger_100ms;
+	fbFQ9999Blog : fbDatalogger_100ms;
+	fbFQ9999Clog : fbDatalogger_100ms;
+	
+	fbPT9999Alog : fbDatalogger_1ms;
+	fbPT9999Blog : fbDatalogger_1ms;
+	fbPT9999Clog : fbDatalogger_1ms;
+
+	fbWT9999Clog : fbDatalogger_100ms;
+
+	fbAT9999OPCONClog : fbDatalogger_100ms;
+	fbAT9999OP300log  : fbDatalogger_100ms;
+	fbAT9999OP313log  : fbDatalogger_100ms;
+	fbAT9999OPDIFFlog : fbDatalogger_100ms;
+
+	fbAT9999RV290log : fbDatalogger_10ms;
+	fbAT9999RV300log : fbDatalogger_10ms;
+	fbAT9999RV310log : fbDatalogger_10ms;
+	fbAT9999RV320log : fbDatalogger_10ms;
+
+	fbAT9999CWxlog  : fbDatalogger_1ms;
+	fbAT9999CWylog  : fbDatalogger_1ms;
+	fbAT9999CWYYlog : fbDatalogger_1ms;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[heartbeat := heartbeat + 1;
+fbGetUnixTimeGlobal();  //set global variable unixTime
+//Code that runs 1 time per second
+IF (heartbeat MOD 1000) = 0 THEN
+	FT9999ASize := LIMIT(500, DINT_TO_UINT((TRUNC(P9999A.fPeriodMS) * TRUNC(1500.0/P9999A.fPeriodMS))), 2500);
+	FT9999BSize := LIMIT(500, DINT_TO_UINT((TRUNC(P9999B.fPeriodMS) * TRUNC(1500.0/P9999B.fPeriodMS))), 2500);
+END_IF
+
+
+
+//Call serial line handlers
+MTSerial(sSendString := MTSendString, weight := MTWeight);
+
+//Call pump handler
+fbP9999A(sPort := P9999A);
+fbP9999B(sPort := P9999B);
+
+//Flow transmitters
+fbFT9999A(AI := FT9999A);
+fbFT9999AFilt(in := FT9999A.pv, size := FT9999ASize, out => FT9999A.pvfilt);
+fbFQ9999A(flow := FT9999A.pv, timeBaseMS := (1000.0*60.0));
+fbFT9999B(AI := FT9999B);
+fbFT9999BFilt(in := FT9999B.pv, size := FT9999BSize, out => FT9999B.pvfilt);
+fbFQ9999B(flow := FT9999B.pv, timeBaseMS := (1000.0*60.0));
+fbFT9999C(AI := FT9999C);
+fbFT9999CFilt(in := FT9999C.pv, size := FT9999CSize, out => FT9999C.pvfilt);
+fbFQ9999C(flow := FT9999C.pv, timeBaseMS := (1000.0*60.0));
+
+fbFT9999Cfq();
+fbFT9999CfqFilt(in := fbFT9999Cfq.pv, size := FT9999CfqSize, out => FT9999CfqPV);
+
+
+//Pressure
+fbPT9999A(AI := PT9999A);
+fbPT9999B(AI := PT9999B);
+fbPT9999C(AI := PT9999C);
+
+//Optek
+fbAT9999OPCONC(AI := AT9999OPCONC);
+fbAT9999OP300(AI := AT9999OP300);
+fbAT9999OP313(AI := AT9999OP313);
+fbAT9999OPDIFF(AI := AT9999OPDIFF);
+
+//Reveal
+fbAT9999RV290(AI := AT9999RV290);
+fbAT9999RV300(AI := AT9999RV300);
+fbAT9999RV310(AI := AT9999RV310);
+fbAT9999RV320(AI := AT9999RV320);
+
+//ColorWise
+fbAT9999CWx(AI := AT9999CWx);
+fbAT9999CWy(AI := AT9999CWy);
+fbAT9999CWYY(AI := AT9999CWYY);
+
+//Data Logging
+fbP9999ARPMlog(fData := P9999A.fSpeedPV);
+fbP9999AFlowlog(fData := P9999A.fFlowPV);
+fbP9999BRPMlog(fData := P9999B.fSpeedPV);
+fbP9999BFlowlog(fData := P9999B.fFlowPV);
+	
+fbFT9999Alog(fData := FT9999A.pv);;
+fbFT9999Blog(fData := FT9999B.pv);
+fbFT9999Clog(fData := FT9999C.pv);
+
+fbFT9999Afiltlog(fData := FT9999A.pvfilt);
+fbFT9999Bfiltlog(fData := FT9999B.pvfilt);
+fbFT9999Cfiltlog(fData := FT9999C.pvfilt);
+fbFT9999Cfqlog(fData := FT9999CfqPV);
+
+fbFQ9999Alog(fData := fbFQ9999A.total);
+fbFQ9999Blog(fData := fbFQ9999B.total);
+fbFQ9999Clog(fData := fbFQ9999C.total);
+
+fbPT9999Alog(fData := PT9999A.pv);
+fbPT9999Blog(fData := PT9999B.pv);
+fbPT9999Clog(fData := PT9999C.pv);
+
+fbWT9999Clog(fData := MTWeight.pv);
+
+fbAT9999OPCONClog(fData := AT9999OPCONC.pv);
+fbAT9999OP300log(fData := AT9999OP300.pv);
+fbAT9999OP313log(fData := AT9999OP313.pv);
+fbAT9999OPDIFFlog(fData := AT9999OPDIFF.pv);
+
+fbAT9999RV290log(fData := AT9999RV290.pv);
+fbAT9999RV300log(fData := AT9999RV300.pv);
+fbAT9999RV310log(fData := AT9999RV310.pv);
+fbAT9999RV320log(fData := AT9999RV320.pv);
+
+fbAT9999CWxlog(fData := AT9999CWx.pv);
+fbAT9999CWylog(fData := AT9999CWy.pv);
+fbAT9999CWYYlog(fData := AT9999CWYY.pv);
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

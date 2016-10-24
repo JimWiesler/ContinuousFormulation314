@@ -1,0 +1,209 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fbMasterflexControl" Id="{118ce5b5-0bd4-43df-9724-57d52ede7b0d}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fbMasterflexControl
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	bReqTx : BOOL := TRUE;
+	fbMFSerial : fbMasterflexSerial;
+	nLastReceiveCounter : UDINT := 0;
+	n : INT := -1;	
+END_VAR
+
+VAR_IN_OUT
+	sPort : sMasterflexPort;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Execute the timeout timer
+sPort.tListenTON(in:=sPort.bListening, pt:=T#1S);
+
+//debug
+//sPort.dbg1 := 1;
+//sPort.dbg2 := SEL(sPort.dbg1 = 1, 10, 20);
+
+//Send the appropriate message based on the state
+IF bReqTX THEN
+	bReqTx := FALSE;
+    sPort.bListening := TRUE;
+	CASE sPort.nState OF
+	1: //Unconfigured
+		sPort.sRxSuffix := '$0D'; // expected response <STX>P?0<CR>
+		sPort.sSendString := '$05'; // <ENQ>
+	2: //Set Address - Always '01'
+		sPort.sRxSuffix := '$06'; // expected response <ACK>
+		sPort.sSendString := '$02P01$0D'; // <STX>P01<CR>
+	3: //Get Pump Drive Status - Command I
+		sPort.sRxSuffix := '$0D'; // expected response <STX>P01Ixxxxx<CR>
+		sPort.sSendString := '$02P01I$0D'; // <STX>P01I<CR>
+	4: //Check Front Panel Switches - Command K
+		sPort.sRxSuffix := '$0D'; // expected response <STX>Kx<CR>
+		sPort.sSendString := '$02P01K$0D'; // <STX>P01K<CR>
+	5: //Reset Front Panel Switches
+		sPort.sRxSuffix := ''; // No expected response
+		sPort.sSendString := '$06P01$0D'; // <ACK>P01<CR>
+	6: //Request current speed
+		sPort.sRxSuffix := '$0D'; // Expected response <STX>S+nnnn.n<CR>
+		sPort.sSendString := '$02P01S$0D'; // <STX>P01S<CR>
+	7: //Set speed
+		sPort.sRxSuffix := '$06'; // expected response <ACK>
+		IF (sPort.fSpeedSP_RQ >= 0.0) THEN
+			sPort.fSpeedSP := sPort.fSpeedSP_RQ;
+		END_IF
+		sPort.fSpeedSP_RQ := -100.0;		
+		sPort.sSendString := concat('$02P01S', SEL(sPort.bDirection, '-', '+')); 
+		sPort.sSendString := concat(sPort.sSendString, LREAL_TO_FMTSTR(sPort.fSpeedSP,1,TRUE)); 
+		sPort.sSendString := concat(sPort.sSendString, '$0D'); // <STX>P01S+nnn.n<CR>
+	8: //Start or Stop Pump
+		sPort.sRxSuffix := '$06'; // expected response <ACK>
+		IF sPort.nRun_RQ = 1 THEN
+			sPort.sSendString := '$02P01G0$0D'; // <STX>P01G<CR>
+		ELSE 
+			sPort.sSendString := '$02P01H$0D'; // <STX>P01H<CR>
+		END_IF
+		sPort.nRun_RQ := -1;
+	10: //Remote - pump always stops when switching between local and remote, either way
+		sPort.sRxSuffix := '$06$06'; // expected response <ACK><ACK>
+		sPort.sSendString := '$02P01R$0D$02P01H$0D'; // <STX>P01R<CR><STX>P01H<CR>
+		sPort.nLocal_RQ := -1;		
+	11: //Local
+		sPort.sRxSuffix := '$06$06'; // expected response <ACK><ACK>
+      	sPort.sSendString := '$02P01H$0D$02P01L$0D'; // <STX>P01H<CR><STX>P01L<CR>
+		sPort.nLocal_RQ := -1;		
+	END_CASE
+END_IF
+
+//Check the serial port
+fbMFSerial(sPort := sPort);
+
+//Handle received messages
+IF (len(sPort.sSendString) = 0) AND 
+         ((nLastReceiveCounter <> sPort.nReceiveCounter) OR sPort.tListenTON.Q OR sPort.nState = 5) THEN
+	bReqTX := TRUE; //Set request to send next message
+	//if receive timed out, go to state 1 EXCEPT when in state 1 - then try to assume pump is numbered
+	//   NOTE: manual says ENQ is the same as I command for numbered pump - NOT TRUE.  
+	//        A previously numbered pump will NOT RESPOND to ENQ.
+	IF sPort.tListenTON.Q = TRUE THEN //no valid message was received so RX timed out
+		IF sPort.nState = 1 THEN
+			sPort.nState := 3;
+		ELSE
+			sPort.nState := 1;
+		END_IF
+	ELSE  //a valid message was received and needs to be processed
+		nLastReceiveCounter := sPort.nReceiveCounter;
+		CASE sPort.nState OF
+		1: //Received message should be <STX>P?0<CR>
+			IF sPort.sLastReceivedString = '$02P?0$0D' THEN
+				//set next state
+				sPort.nState := 2;
+			ELSIF left(sPort.sLastReceivedString,5) = '$02P01I' THEN
+				//If pump already has address, ENQ is same as I command
+				sPort.nState := 3;
+			ELSE
+				sPort.nState := -1;  //place holder for action on failure
+			END_IF;
+		2: //Received message should be <ACK>
+			IF sPort.sLastReceivedString = '$06' THEN
+				//set next state
+				sPort.nState := 3;
+			ELSE
+				sPort.nState := -2;  //place holder for action on failure
+			END_IF
+		3: //Received message should be <STX>P01Ixxxxx<CR>
+			IF left(sPort.sLastReceivedString,5) = '$02P01I' THEN
+				sPort.bLocal := SEL((mid(sPort.sLastReceivedString,1,6) = '0'), FALSE, TRUE); //0 is local
+				sPort.bRun := SEL((mid(sPort.sLastReceivedString,1,9) = '3'), FALSE, TRUE); //3 is pump running
+				sPort.nPumpStatus := STRING_TO_INT(mid(sPort.sLastReceivedString,1,9)); // Pump status
+				sPort.nCommStatus := STRING_TO_INT(mid(sPort.sLastReceivedString,1,10)); // Communication status
+				//set next state
+				sPort.nState := 4;
+			ELSE
+				sPort.nState := -3;  //place holder for action on failure
+			END_IF
+		4: //Received message should be <STX>Kx<CR>
+			IF left(sPort.sLastReceivedString,2) = '$02K' THEN
+				n := STRING_TO_INT(mid(sPort.sLastReceivedString,1,3));  //do nothing with this, just clear the flag
+				//set next state
+				sPort.nState := SEL(n = 0, 5, 6); //no keys pressed means can skip the key reset
+			ELSE
+				sPort.nState := -4;  //place holder for action on failure
+			END_IF
+		5: //No confirmation message expected after key clear
+			sPort.nState := 6;  //go to speed request
+		6: //Received message should be <STX>S+nnnn.n<CR>
+			IF left(sPort.sLastReceivedString,2) = '$02S' THEN
+				//sPort.bDirection := SEL((mid(sPort.sLastReceivedString,1,3) = '+'), FALSE, TRUE); //-/0 is reverse, +/1 is forward
+				IF sPort.bRun THEN
+					sPort.fSpeedPV := STRING_TO_LREAL(mid(sPort.sLastReceivedString,6,4));
+				ELSE
+					sPort.fSpeedPV := 0.0;
+				END_IF				
+				
+				//set next state
+				IF sPort.fSpeedSP_RQ >= 0.0 THEN
+					sPort.nState := 7;
+				ELSIF sPort.nRun_RQ <> -1 THEN
+					sPort.nState := 8;
+				ELSIF sPort.nLocal_RQ = 0 THEN
+					sPort.nState := 10;
+				ELSIF sPort.nLocal_RQ = 1 THEN
+					sPort.nState := 11;
+				ELSE
+					sPort.nState := 3;
+				END_IF
+			ELSE
+				sPort.nState := -6;  //place holder for action on failure
+			END_IF
+		7: //Received message should be <ACK>
+			IF sPort.sLastReceivedString = '$06' THEN
+				//set next state
+				IF sPort.nRun_RQ <> -1 THEN
+					sPort.nState := 8;
+				ELSIF sPort.nLocal_RQ = 0 THEN
+					sPort.nState := 10;
+				ELSIF sPort.nLocal_RQ = 1 THEN
+					sPort.nState := 11;
+				ELSE
+					sPort.nState := 3;
+				END_IF
+			ELSE
+				sPort.nState := -7;  //place holder for action on failure
+			END_IF
+		8: //Received message should be <ACK>
+			IF sPort.sLastReceivedString = '$06' THEN
+				//set next state
+				IF sPort.nLocal_RQ = 0 THEN
+					sPort.nState := 10;
+				ELSIF sPort.nLocal_RQ = 1 THEN
+					sPort.nState := 11;
+				ELSE
+					sPort.nState := 3;
+				END_IF
+			ELSE
+				sPort.nState := -8;  //place holder for action on failure
+			END_IF
+		10: //Received message should be <ACK><ACK>
+			IF sPort.sLastReceivedString = '$06$06' THEN
+				//set next state
+				sPort.nState := 3;
+			ELSE
+				sPort.nState := -10;  //place holder for action on failure
+			END_IF
+		11: //Received message should be <ACK><ACK>
+			IF sPort.sLastReceivedString = '$06$06' THEN
+				//set next state
+				sPort.nState := 3;
+			ELSE
+				sPort.nState := -11;  //place holder for action on failure
+			END_IF
+		END_CASE
+	END_IF
+	sPort.bListening := FALSE;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

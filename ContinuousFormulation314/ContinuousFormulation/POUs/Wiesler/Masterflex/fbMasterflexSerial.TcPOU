@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fbMasterflexSerial" Id="{fb20943d-0e05-4132-94f4-f937d889f1ba}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fbMasterflexSerial
+VAR
+	// Comm buffers
+	RxBufferMT			: ComBuffer;	// Receive data buffer for Mettler Toledo
+	TxBufferMT			: ComBuffer;	// Transmit data buffer for Mettler Toledo
+	// background communication with the EL6002 port
+	fbPortCtrl		: SerialLineControl; // must be called every scan
+	bPortCtrlError	: BOOL;
+	ePortCtrlErrorID	: ComError_t;
+	// Variables for sending data
+	sSendString: STRING;
+	fbSend		: SendString;
+	bSendBusy	: BOOL;
+	eSendErrorID: ComError_t;
+
+
+	// Variables for receiving data
+	fbReceive		: ReceiveString;
+	sReceivedString	: STRING;
+	bStringReceived	: BOOL;
+	bReceiveBusy	: BOOL;
+	bReceiveError	: BOOL;
+	eReceiveErrorID	: ComError_t;
+	
+END_VAR
+
+VAR_IN_OUT
+	sPort : sMasterflexPort;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// *********************************************************************************
+// The SerialLineControl function block is supposed to be called in every PLC cycle.
+// It communicates with the serial line hardware device and transmits or receives data.
+// The SerialLineControl can be called in the standard task (e.g.for PcCOM port usage) 
+// or in a separate fast task (e.g.for terminal usage) as well.
+// A fast separate task will be necessary at high baud rates or with KL6001 terminals 
+// which have a small process image (3 or 5 data bytes only)
+// **********************************************************************************
+
+// background communication with the Port terminal
+fbPortCtrl(
+	Mode:= SERIALLINEMODE_EL6_22B, 
+	pComIn:= ADR(sPort.stIn_Port), 
+	pComOut:= ADR(sPort.stOut_Port), 
+	SizeComIn:= UINT_TO_INT(SIZEOF(sPort.stIn_Port)), 
+	Error=> , 
+	ErrorID=> , 
+	TxBuffer:= TxBufferMT, 
+	RxBuffer:= RxBufferMT );
+IF fbPortCtrl.Error THEN
+	bPortCtrlError := TRUE;
+	ePortCtrlErrorID := fbPortCtrl.ErrorID;
+END_IF
+
+
+// Call the send block if the sSendString has a value to send.
+// Also call the block as long as it is busy to finish a transmission.
+// When the transmission is complete clear sSendString to prepare for next string to send
+IF len(sPort.sSendString) > 0 THEN
+	fbSend(	SendString:= sPort.sSendString,
+			TXbuffer:= TxBufferMT,
+			Busy=> bSendBusy,
+			Error=> );
+	IF fbSend.Error <> COMERROR_NOERROR THEN
+		eSendErrorID := fbSend.Error;
+	END_IF
+	IF NOT bSendBusy THEN
+		sPort.sSendString := '';
+	END_IF
+END_IF
+
+//	Receive string data:
+//	The block receives any data strings ending with RxSuffix characters.	
+fbReceive(
+	Prefix:= '',
+	Suffix:= sPort.sRxSuffix,
+	Timeout:= T#1s,
+	ReceivedString:= sReceivedString,
+	RXbuffer:= RxBufferMT,
+	StringReceived=> bStringReceived,
+	Busy=> bReceiveBusy,
+	Error=> ,
+	RxTimeout=> sPort.bReceiveTimeout );
+IF fbReceive.Error <> COMERROR_NOERROR THEN
+	eReceiveErrorID := fbReceive.Error;
+END_IF
+IF bStringReceived THEN
+	sPort.nReceiveCounter := sPort.nReceiveCounter + 1;
+	sPort.sLastReceivedString := sReceivedString;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fbMovingAverage" Id="{7bfc8553-c2f8-4625-9a89-7b59198724bd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fbMovingAverage
+VAR CONSTANT
+	arrSize : UINT := 3000; //Do not change online.
+END_VAR
+VAR_INPUT
+	in : LREAL;
+	size : UINT := 1000;
+END_VAR
+VAR_OUTPUT
+	out : LREAL;
+END_VAR
+VAR
+	wkSize : UINT;
+	start : UINT := arrSize - 1;
+	vals : ARRAY[0..arrSize - 1] OF LREAL := [arrSize(0.0)];
+	lastSize : UINT := 0;
+	end : UINT;
+	i : UINT;
+END_VAR
+VAR_IN_OUT
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[wkSize := LIMIT(1, size, arrSize); //make sure size is in limits
+start := (start + 1) MOD arrSize;
+IF lastSize <> wkSize THEN //moving average size has changed, need to totally recalculate out
+	vals[start] := in;
+	out := 0.0;
+	FOR i := 1 TO size DO
+		out := out + vals[(start + 1 + arrSize - i) MOD arrSize];
+	END_FOR
+	out := out/UINT_TO_LREAL(size);
+	lastSize := wkSize;
+ELSE
+	out := out + (in - vals[(start + arrSize - size) MOD arrSize])/UINT_TO_LREAL(size);
+	vals[start] := in;
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

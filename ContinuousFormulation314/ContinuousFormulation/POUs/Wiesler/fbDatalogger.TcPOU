@@ -1,0 +1,33 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fbDatalogger" Id="{7db4dd2a-609e-4033-9251-a25864602a12}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK fbDatalogger
+VAR_INPUT
+	fData : LREAL;
+END_VAR
+VAR_OUTPUT
+	afLog : ARRAY[0..999] OF LREAL;
+	nLogJSTime : ULINT := 0;
+END_VAR
+VAR
+	afCache : ARRAY[0..999] OF LREAL;
+	nCount : DINT := 0;
+	nPoints : DINT := 1000;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Fill up the SampleArray
+afCache[nCount] := fData;
+// Increase the sampleIndex
+nCount := nCount + 1;
+IF nCount >= nPoints THEN
+	// Copy values into log array
+	afLog := afCache;
+	// Increment log index to tell watching external logger the data has changed
+	nLogJSTime := unixTime;
+	// Reset count
+	nCount := 0;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
