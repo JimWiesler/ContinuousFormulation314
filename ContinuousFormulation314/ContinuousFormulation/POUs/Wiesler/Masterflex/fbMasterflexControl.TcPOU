@@ -143,7 +143,7 @@ IF (len(sPort.sSendString) = 0) AND
 				END_IF				
 				
 				//set next state
-				IF sPort.fSpeedSP_RQ >= 0.0 THEN
+				IF sPort.fSpeedSP_RQ >= 0.0  OR (sPort.nRun_RQ = 1) THEN //JRW issue #1 set speed every time pump is started to avoid pump running in wrong direction or wrong speed.
 					sPort.nState := 7;
 				ELSIF sPort.nRun_RQ <> -1 THEN
 					sPort.nState := 8;
