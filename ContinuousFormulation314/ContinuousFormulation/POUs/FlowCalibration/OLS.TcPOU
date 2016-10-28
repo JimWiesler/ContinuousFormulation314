@@ -1,0 +1,63 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="OLS" Id="{b1fb22e2-68f2-4c90-9af2-b08b1ea1a7f4}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION OLS : OLSResult
+VAR_INPUT
+	x : ARRAY [1..100] OF LREAL;
+	y : ARRAY [1..100] OF LREAL;
+	length : INT;
+END_VAR
+VAR
+	fLength: LREAL;
+	f : LREAL;
+	i : INT := 0;
+	xSquaredSum : LREAL := 0;
+	xySum : LREAL := 0;
+	xBar : LREAL := 0;
+	yBar : LREAL := 0;
+	xSum : LREAL := 0;
+	ySum : LREAL := 0;
+	
+	fx : LREAL := 0; // y = fx = m * x + b
+	SSE : LREAL := 0; // sum of square error
+	SST : LREAL := 0; // sum of squares total
+
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF length < 2 OR length > 100 THEN
+	OLS.status := 1;
+	RETURN;
+END_IF
+
+fLength := INT_TO_LREAL(length);
+
+FOR i := 1 TO length DO
+	xSquaredSum := xSquaredSum + x[i] * x[i];
+	xySum := xySum + x[i] * y[i];
+	xSum := xSum + x[i];
+	ySum := ySum + y[i];
+END_FOR
+
+xBar := xSum / fLength;
+yBar := ySum / fLength;
+
+f := xSquaredSum - (fLength * xBar * xBar);
+IF ABS(f) < 0.001 THEN // TODO: determine proper tolerance
+	OLS.status := 2;
+	RETURN;
+END_IF
+
+OLS.m := (xySum - (fLength * xBar * yBar)) / f;
+OLS.b := yBar - (OLS.m * xBar);
+
+FOR i := 1 TO length DO
+	fx := OLS.m * x[i] + OLS.b;
+	SSE := SSE + ((y[i] - fx) * (y[i] - fx));
+	SST := SST + ((y[i] - yBar) * (y[i] - yBar));
+END_FOR
+
+OLS.R2 := 1 - SSE / SST;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

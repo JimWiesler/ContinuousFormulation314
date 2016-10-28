@@ -20,6 +20,7 @@ VAR_OUTPUT
 	flowTotal : ARRAY[1..n] OF LREAL;
 	weight : ARRAY[1..n] OF LREAL;
 	flowRate : ARRAY[1..n] OF LREAL;
+	scaleRate : ARRAY[1..n] OF LREAL;
 END_VAR
 VAR
 	i : UINT := 0; // index
@@ -1069,7 +1070,7 @@ END_VAR
                                     <o>
                                       <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                                       <o n="Value" t="StringValue">
-                                        <v n="Value">"i &lt; n"</v>
+                                        <v n="Value">"i &lt; n and start"</v>
                                         <v n="DefaultValue">""</v>
                                       </o>
                                       <v n="Id">166L</v>
@@ -1444,7 +1445,35 @@ END_VAR
                     </o>
                   </l2>
                 </o>
-                <l2 n="Attributes" />
+                <l2 n="Attributes" cet="SFCAttribute">
+                  <o>
+                    <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
+                    <o n="Value" t="StringValue">
+                      <v n="Value">""</v>
+                      <v n="DefaultValue">""</v>
+                    </o>
+                    <v n="Id">229L</v>
+                    <v n="IdParent">9L</v>
+                  </o>
+                  <o>
+                    <v n="AttributeId">{7d894980-aeea-405c-a0f6-e2b26429c58f}</v>
+                    <o n="Value" t="StringValue">
+                      <v n="Value">""</v>
+                      <v n="DefaultValue">""</v>
+                    </o>
+                    <v n="Id">230L</v>
+                    <v n="IdParent">9L</v>
+                  </o>
+                  <o>
+                    <v n="AttributeId">{01580b27-6378-448b-8ecb-0e4b795b58d6}</v>
+                    <o n="Value" t="BoolValue">
+                      <v n="Value">"FALSE"</v>
+                      <v n="DefaultValue">"FALSE"</v>
+                    </o>
+                    <v n="Id">231L</v>
+                    <v n="IdParent">9L</v>
+                  </o>
+                </l2>
                 <v n="Id">9L</v>
                 <v n="IdParent">-1L</v>
               </o>
@@ -1704,6 +1733,7 @@ MAIN.MTSendString := 'ZI$0D$0A';  //Zero Immediately the scale
 	flowTotal[i] := 0.0;
 	weight[i] := 0.0;
 	flowRate[i] := 0.0;	
+	scaleRate[i] := 0.0;	
 END_FOR
 i := 0;
 ]]></ST>
@@ -1745,7 +1775,7 @@ END_IF
       <Implementation>
         <ST><![CDATA[//reset for next calibration
 start := FALSE;
-i := 0;
+
 
 ]]></ST>
       </Implementation>
@@ -1754,6 +1784,9 @@ i := 0;
       <Implementation>
         <ST><![CDATA[//Stop pump
 pump.nRun_RQ := 0; //stop pump
+
+//run data analysis to determine new calibration values
+//TODO
 ]]></ST>
       </Implementation>
     </Action>
@@ -1762,8 +1795,9 @@ pump.nRun_RQ := 0; //stop pump
         <ST><![CDATA[endTimes[i] := unixTime;
 flowTotal[i] := fq.total;
 weight[i] := MAIN.MTWeight.pv;
-t := DWORD_TO_LREAL(TIME_TO_DWORD(runTestDuration))/1000.0/60.0;
-flowRate[i] := fq.total/t;
+t := ULINT_TO_LREAL(endTimes[i] - startTimes[i])/1000.0/60.0; //Test duration in minutes
+flowRate[i] := flowTotal[i]/t;
+scaleRate[i] := weight[i]/t;
 IF NOT autoAdvance THEN
 	start := FALSE;
 END_IF

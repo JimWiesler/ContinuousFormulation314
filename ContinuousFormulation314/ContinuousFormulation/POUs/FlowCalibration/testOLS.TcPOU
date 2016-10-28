@@ -1,0 +1,77 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="testOLS" Id="{ba4c14b3-2a86-449b-ac2c-5d6af9e75210}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK testOLS
+VAR_INPUT
+END_VAR
+VAR_OUTPUT
+	result : INT := 0;
+END_VAR
+VAR
+	OLSOut : OLSResult;
+	y1 : ARRAY [1..100] OF LREAL := [  0.12548111,   2.48964043,   3.8531352 ,   5.02534211,
+         6.19021734,   7.34772823,   8.5165989 ,   9.69657362,
+        10.88234988,  12.06983084,  15.09756653,  18.07902939,
+        21.10340477,  23.99898836,  26.91563451,  29.92832035,
+        33.03966693,  35.97102658,  41.68383358,  46.98476969,
+        53.01302749,  57.72483702,  63.22571341,  68.34296168, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	x1 : ARRAY [1..100] OF LREAL := [ 10,  20,  30,  40,  50,  60,  70,  80,  90, 100, 125, 150, 175,
+       200, 225, 250, 275, 300, 350, 400, 450, 500, 550, 600, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	x2 : ARRAY [1..100] OF LREAL := [ 10,  10,  10,  10,  10,  10,  10,  10,  10, 10, 10, 10, 10,
+       10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 0, 0, 0, 0, 0, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+	n : INT; // length of data array
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// testing if length is out of range
+OLSOut := OLS(x:=x1, y:=y1, length:=1);
+IF OLSOut.status <> 1 THEN
+	result := result + 1;
+END_IF
+
+// testing if length is out of range
+OLSOut := OLS(x:=x1, y:=y1, length:=101);
+IF OLSOut.status <> 1 THEN
+	result := result + 1;
+END_IF
+
+// testing if OLS results (m, b, R2) as expected
+n := 24;
+OLSOut := OLS(x:=x1, y:=y1, length:=n);
+IF OLSOut.status <> 0 THEN
+	result := result + 1;
+	ELSE IF ABS(OLSOut.b - 0.554765) > 0.01 OR 
+            ABS(OLSOut.m - 0.115292) > 0.01 OR
+            ABS(OLSOut.R2 - 0.999126) > 0.01 THEN
+		result := result + 1;
+		END_IF
+END_IF
+
+OLSOut := OLS(x:=x2, y:=y1, length:=n);
+IF OLSOut.status <> 2 THEN
+	result := result + 1;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>
