@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="testFC" Id="{82c78588-a065-4a1c-93ae-dff2d63d1f9c}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK testFC
+VAR_INPUT
+END_VAR
+VAR_IN_OUT
+	pumpSpeedRQ : LREAL := 0;
+END_VAR
+VAR_OUTPUT
+
+END_VAR
+VAR
+	flowPV : LREAL := 0;
+	pumpSpeed : LREAL := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[IF pumpSpeedRQ > -50 THEN
+	pumpSpeed := pumpSpeedRQ;
+	pumpSpeedRQ := -100;
+END_IF]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

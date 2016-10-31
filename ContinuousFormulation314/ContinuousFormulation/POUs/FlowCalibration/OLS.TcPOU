@@ -5,7 +5,7 @@
 VAR_INPUT
 	x : ARRAY [1..100] OF LREAL;
 	y : ARRAY [1..100] OF LREAL;
-	length : INT;
+	length : UINT;
 END_VAR
 VAR
 	fLength: LREAL;

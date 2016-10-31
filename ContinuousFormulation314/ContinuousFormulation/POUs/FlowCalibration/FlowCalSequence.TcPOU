@@ -13,23 +13,37 @@ END_VAR
 VAR_IN_OUT
 	fq : FQ1; //flow totalizer
 	pump : sMasterflexPort;
+	fc : FC1;
 END_VAR
 VAR_OUTPUT
-	startTimes : ARRAY[1..n] OF ULINT;
-	endTimes : ARRAY[1..n] OF ULINT;
-	flowTotal : ARRAY[1..n] OF LREAL;
-	weight : ARRAY[1..n] OF LREAL;
-	flowRate : ARRAY[1..n] OF LREAL;
-	scaleRate : ARRAY[1..n] OF LREAL;
+	startTimes : ARRAY[1..100] OF ULINT;
+	endTimes : ARRAY[1..100] OF ULINT;
+	flowTotal : ARRAY[1..100] OF LREAL;
+	weight : ARRAY[1..100] OF LREAL;
+	flowRate : ARRAY[1..100] OF LREAL;
+	scaleRate : ARRAY[1..100] OF LREAL;
+	calibrationStatus : UINT := 0;
 END_VAR
 VAR
 	i : UINT := 0; // index
 	n : UINT := 24;  //number of points to test
 	t : LREAL := 0.0; //temporary variable
 	tol : LREAL := 5.0;  //tolerance of the zeroing - weight must be below this to have successfully zero'd
-	sp : ARRAY [1..n] OF LREAL := [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
-                                    125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0,
-                                    350.0, 400.0, 450.0, 500.0, 550.0, 600.0];
+	R2Tol : LREAL := 0.95; //tolerance of the OLS fit
+	flowCalMTol : LREAL := 0.05; //tolerance for slope
+	flowCalBTol : LREAL := 0.05; //tolerance for intercept
+	OLSTemp : OLSResult;
+	sp : ARRAY [1..100] OF LREAL := [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
+                                    125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0, 350.0, 400.0,
+                                    450.0, 500.0, 550.0, 600.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
+                                    0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
+									];
 
 	setSpeed : SFCStepType;
 	runTest : SFCStepType;
@@ -1736,6 +1750,7 @@ MAIN.MTSendString := 'ZI$0D$0A';  //Zero Immediately the scale
 	scaleRate[i] := 0.0;	
 END_FOR
 i := 0;
+calibrationStatus := 2; //In process
 ]]></ST>
       </Implementation>
     </Action>
@@ -1786,7 +1801,32 @@ start := FALSE;
 pump.nRun_RQ := 0; //stop pump
 
 //run data analysis to determine new calibration values
-//TODO
+//Check fit of flow data vs. scale data
+OLSTemp := ols(x := flowRate, y := scaleRate, length := n);
+t := 0.0;
+FOR i := 1 TO n DO
+	t := MAX(t, flowRate[i]);	
+END_FOR
+IF t = 0.0 THEN //ensure no divide by zero
+	t := 1.0;
+END_IF
+IF OLSTemp.status <> 0 OR 									//OLS failed
+		OLSTemp.R2 < R2Tol OR 								//Not a good line fit
+		ABS(1-OLSTemp.m) > flowCalMTol OR  					//Slope not close to 1
+		ABS(OLSTemp.b/scaleRate[n]) > flowCalBTol THEN		//Intercept is greater than tolerance % of scale
+	calibrationStatus := 3; //Failed FT calibration
+ELSE
+	fc.FTOLS := OLSTemp;
+	// Least squares fit for flowmeter vs. scale calibration was good, check for pump speed vs. flow 
+	OLSTemp := ols(x := sp, y := scaleRate, length := n);
+	IF OLSTemp.status <> 0 OR 						//OLS failed
+			OLSTemp.R2 < R2Tol THEN					//Not a good line fit
+		calibrationStatus := 4; //Failed pump speed calibration
+	ELSE
+		calibrationStatus := 1; //Success
+		fc.pumpOLS := OLSTemp;
+	END_IF
+END_IF
 ]]></ST>
       </Implementation>
     </Action>

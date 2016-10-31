@@ -17,6 +17,10 @@ VAR_INPUT
 	fbFQ9999A : FQ1;
 	fbFQ9999B : FQ1;
 	fbFQ9999C : FQ1;
+	
+	phase : UINT := 0;
+	//Flow and Concentration Control
+	FC9999A : FC1;
 		
 	
 END_VAR
@@ -57,6 +61,11 @@ VAR
 	//function blocks
 	fbP9999A : fbMasterflex;
 	fbP9999B : fbMasterflex;
+	
+	//Phases
+	FT9999A_FLOWCAL : FlowCalSequence;
+	FT9999B_FLOWCAL : FlowCalSequence;
+	
 	//AI blocks
 	fbFT9999A : AI1;
 	fbFT9999B : AI1;
@@ -163,6 +172,9 @@ fbFQ9999C(flow := FT9999C.pv, timeBaseMS := (1000.0*60.0));
 fbFT9999Cfq();
 fbFT9999CfqFilt(in := fbFT9999Cfq.pv, size := FT9999CfqSize, out => FT9999CfqPV);
 
+//Flow and Pressure Control
+FC9999A(pump := P9999A, ft := FT9999A);
+FT9999A_FLOWCAL(fq := fbFQ9999A, pump := P9999A, fc := FC9999A);
 
 //Pressure
 fbPT9999A(AI := PT9999A);
@@ -224,6 +236,13 @@ fbAT9999RV320log(fData := AT9999RV320.pv);
 fbAT9999CWxlog(fData := AT9999CWx.pv);
 fbAT9999CWylog(fData := AT9999CWy.pv);
 fbAT9999CWYYlog(fData := AT9999CWYY.pv);
+
+//Phase Control
+CASE phase OF
+1:
+	FT9999A_FLOWCAL.start := TRUE;
+	phase := 0;
+END_CASE
 ]]></ST>
     </Implementation>
   </POU>

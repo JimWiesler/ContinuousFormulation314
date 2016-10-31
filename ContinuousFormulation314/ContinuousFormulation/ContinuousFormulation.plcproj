@@ -70,6 +70,14 @@
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
+    <Compile Include="POUs\FlowConcentrationControl\FC1.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\FlowConcentrationControl\testFC.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
     </Compile>
@@ -176,6 +184,7 @@
     <Folder Include="DUTs\Wiesler\Masterflex" />
     <Folder Include="GVLs" />
     <Folder Include="POUs\FlowCalibration" />
+    <Folder Include="POUs\FlowConcentrationControl" />
     <Folder Include="POUs\Wiesler" />
     <Folder Include="POUs\Wiesler\Masterflex" />
     <Folder Include="POUs\Wiesler\Datalog" />
@@ -200,6 +209,10 @@
       <Namespace>VisuNativeControl</Namespace>
       <SystemLibrary>True</SystemLibrary>
       <ResolverGuid>2717eb6a-dd07-4c66-8d8d-cacebd7b18ae</ResolverGuid>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_ControllerToolbox">
+      <DefaultResolution>Tc2_ControllerToolbox, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_ControllerToolbox</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_SerialCom">
       <DefaultResolution>Tc2_SerialCom, * (Beckhoff Automation GmbH)</DefaultResolution>
