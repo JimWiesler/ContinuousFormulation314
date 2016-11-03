@@ -32,7 +32,8 @@ VAR
 	R2Tol : LREAL := 0.95; //tolerance of the OLS fit
 	flowCalMTol : LREAL := 0.05; //tolerance for slope
 	flowCalBTol : LREAL := 0.05; //tolerance for intercept
-	OLSTemp : OLSResult;
+	OLSFlowTemp : OLSResult;
+	OLSPumpTemp : OLSResult;
 	sp : ARRAY [1..100] OF LREAL := [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
                                     125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0, 350.0, 400.0,
                                     450.0, 500.0, 550.0, 600.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -48,6 +49,7 @@ VAR
 	setSpeed : SFCStepType;
 	runTest : SFCStepType;
 	recordTest : SFCStepType;
+	calcCalibration : SFCStepType;
 END_VAR
 ]]></Declaration>
     <Implementation>
@@ -1239,7 +1241,7 @@ END_VAR
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"i &gt;= n"</v>
+                            <v n="Value">"calcCalibration.t &gt;= T#2s"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">225L</v>
@@ -1276,152 +1278,6 @@ END_VAR
                         </o>
                       </l2>
                       <v n="Id">224L</v>
-                      <v n="IdParent">9L</v>
-                    </o>
-                    <o t="SFCStep">
-                      <o n="ElementList" t="SFCElementList">
-                        <l2 n="InnerList" />
-                      </o>
-                      <l2 n="Attributes" cet="SFCAttribute">
-                        <o>
-                          <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">"Step0"</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">171L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{7d894980-aeea-405c-a0f6-e2b26429c58f}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">172L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{01580b27-6378-448b-8ecb-0e4b795b58d6}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">173L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{bc882c11-1e91-4dd8-a6b8-2075724ed18b}</v>
-                          <o n="Value" t="EnumValue">
-                            <v n="TemplateGuid">{79a4fdd5-c859-4de4-aa8d-c03372c880c2}</v>
-                            <n n="BaseType" />
-                            <v n="Value">"0"</v>
-                            <v n="DefaultValue">"0"</v>
-                          </o>
-                          <v n="Id">174L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{6844a48e-46c2-4cc8-a185-a478f3b99cc0}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">175L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{cacf1a68-236e-47c2-b7b1-1cf9199718cb}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">176L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{b693554c-1b01-4a8d-afde-9e3a46f7465d}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">177L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{700a583f-b4d4-43e4-8c14-629c7cd3bec8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">178L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{a6b08bd8-b696-47e3-9cbf-7408b61c9ff8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">179L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{a2621e18-7de3-4ea6-ae6d-89e9e0b7befd}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">180L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                      </l2>
-                      <v n="Id">170L</v>
-                      <v n="IdParent">9L</v>
-                    </o>
-                    <o t="SFCTransition">
-                      <v n="VariableName">"Step0__to__Init"</v>
-                      <l2 n="Attributes" cet="SFCAttribute">
-                        <o>
-                          <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">"recordTest.t &gt;= T#2S"</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">22L</v>
-                          <v n="IdParent">21L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{7d894980-aeea-405c-a0f6-e2b26429c58f}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">23L</v>
-                          <v n="IdParent">21L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{01580b27-6378-448b-8ecb-0e4b795b58d6}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">24L</v>
-                          <v n="IdParent">21L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{bc882c11-1e91-4dd8-a6b8-2075724ed18b}</v>
-                          <o n="Value" t="EnumValue">
-                            <v n="TemplateGuid">{79a4fdd5-c859-4de4-aa8d-c03372c880c2}</v>
-                            <n n="BaseType" />
-                            <v n="Value">"0"</v>
-                            <v n="DefaultValue">"0"</v>
-                          </o>
-                          <v n="Id">25L</v>
-                          <v n="IdParent">21L</v>
-                        </o>
-                      </l2>
-                      <v n="Id">21L</v>
                       <v n="IdParent">9L</v>
                     </o>
                     <o t="SFCJump">
@@ -1756,10 +1612,7 @@ calibrationStatus := 2; //In process
     </Action>
     <Action Name="setSpeed_entry" Id="{86c1a5e6-debf-4299-97b9-6ab248372f10}">
       <Implementation>
-        <ST><![CDATA[i := i + 1;
-//Clear captured values for this run
-//TODO
-//Send speed setpoint
+        <ST><![CDATA[//Send speed setpoint
 IF sp[i] > 0.1 THEN
 	pump.nRun_RQ := 1; //start pump
 	pump.fSpeedSP_RQ := sp[i];
@@ -1802,7 +1655,13 @@ pump.nRun_RQ := 0; //stop pump
 
 //run data analysis to determine new calibration values
 //Check fit of flow data vs. scale data
-OLSTemp := ols(x := flowRate, y := scaleRate, length := n);
+OLSFlowTemp := ols(x := flowRate, y := scaleRate, length := n);
+//Check fit of pump speed data vs. scale data
+OLSPumpTemp := ols(x := scaleRate, y := sp, length := n);
+
+//Determine maximum x value of flow data, this is just for the test of intercept
+//Expect intercept to be 'near 0.0', so knowing the range of x values is
+//necessary to determine what is 'close'
 t := 0.0;
 FOR i := 1 TO n DO
 	t := MAX(t, flowRate[i]);	
@@ -1810,21 +1669,23 @@ END_FOR
 IF t = 0.0 THEN //ensure no divide by zero
 	t := 1.0;
 END_IF
-IF OLSTemp.status <> 0 OR 									//OLS failed
-		OLSTemp.R2 < R2Tol OR 								//Not a good line fit
-		ABS(1-OLSTemp.m) > flowCalMTol OR  					//Slope not close to 1
-		ABS(OLSTemp.b/scaleRate[n]) > flowCalBTol THEN		//Intercept is greater than tolerance % of scale
+
+//Check Linearity, slope, and intercept (range and zero)
+IF OLSFlowTemp.status <> 0 OR 							//OLS failed
+		OLSFlowTemp.R2 < R2Tol OR 						//Not a good line fit
+		ABS(1-OLSFlowTemp.m) > flowCalMTol OR  			//Slope not close to 1
+		ABS(OLSFlowTemp.b/t) > flowCalBTol THEN			//Intercept is greater than tolerance % of scale
 	calibrationStatus := 3; //Failed FT calibration
 ELSE
-	fc.FTOLS := OLSTemp;
-	// Least squares fit for flowmeter vs. scale calibration was good, check for pump speed vs. flow 
-	OLSTemp := ols(x := sp, y := scaleRate, length := n);
-	IF OLSTemp.status <> 0 OR 						//OLS failed
-			OLSTemp.R2 < R2Tol THEN					//Not a good line fit
+	// Check for pump speed vs. flow 
+	IF OLSFlowTemp.status <> 0 OR 						//OLS failed
+			OLSFlowTemp.R2 < R2Tol THEN					//Not a good line fit
 		calibrationStatus := 4; //Failed pump speed calibration
 	ELSE
 		calibrationStatus := 1; //Success
-		fc.pumpOLS := OLSTemp;
+		//set both calibrations
+		fc.FTOLS := OLSFlowTemp;
+		fc.pumpOLS := OLSPumpTemp;  //All checks were good, the calibration is successful.
 	END_IF
 END_IF
 ]]></ST>

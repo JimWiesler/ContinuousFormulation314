@@ -6,12 +6,14 @@ VAR_INPUT
 	uncalFTPV : LREAL := 0;
 	FTOLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
 	pumpOLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
-	PID : FB_CTRL_PID_EXT;
+	PID : FB_CTRL_PID_EXT := (bsync := TRUE, eMode := E_CTRL_MODE.eCTRL_MODE_MANUAL);
 	sPID : ST_CTRL_PID_EXT_PARAMS := (
 		tCtrlCycleTime := T#100MS,
 		tTaskCycleTime := T#1MS, 
-		fKp := 1,
-		tTn := T#1MS
+		fKp := 10,
+		tTn := T#5S,
+		fOutMaxLimit := 600.0,
+		fOutMinLimit := 0.0
 		
 	);
 END_VAR
@@ -23,12 +25,27 @@ VAR_OUTPUT
 
 END_VAR
 VAR
-	PV : LREAL := 0;	
+	PV : LREAL := 0.0;
+	OUT : LREAL := 0.0;
+	Out_H: LREAL := 0.0;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[PV := FTOLS.m * ft.pvfilt + FTOLS.b;
-PID(stParams := sPID);]]></ST>
+PID(stParams := sPID, fActualValue := PV);
+OUT := DINT_TO_LREAL(LREAL_TO_DINT(PID.fOut*10.0))/10.0; //round to tenth
+
+CASE PID.eState OF
+E_CTRL_STATE.eCTRL_STATE_ACTIVE:
+	IF OUT <> out_h THEN
+		pump.fSpeedSP_RQ := OUT;
+	END_IF
+ELSE
+	PID.fManSyncValue := pump.fSpeedSP;
+	PID.fSetpointValue := PV;
+END_CASE
+
+out_h := OUT;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>
