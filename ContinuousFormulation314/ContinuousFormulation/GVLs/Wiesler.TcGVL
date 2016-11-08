@@ -3,6 +3,12 @@
   <GVL Name="Wiesler" Id="{1064e7db-6065-4713-bab0-560439b3983d}">
     <Declaration><![CDATA[VAR_GLOBAL
 	unixTime : ULINT;
+END_VAR
+
+VAR_GLOBAL PERSISTENT
+	FT9999A_OLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
+	P9999A_OLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
+	FC9999ACtrlData : ControllerData := (Kp := 15.0, Ti := T#5S, execTime := T#500MS);
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>

@@ -20,12 +20,19 @@ VAR_INPUT
 	
 	phase : UINT := 0;
 	//Flow and Concentration Control
-	FC9999A : FC1;
+	FC9999A1 : FC1;
+	FC9999A2 : FC1b;
+	FCForm : UINT := 2;
 		
 	
 END_VAR
 
 VAR
+	//test
+    Tau : LREAL := 1.0;
+	FilterFactor : LREAL;
+	ftfirstorder : LREAL;
+	//-test
 	heartbeat : DINT;
 	fbGetUnixTimeGlobal : fbGetUnixTime;
 	
@@ -52,6 +59,7 @@ VAR
 	AT9999RV300 : AI := (scale := (euLo := -0.1,  euHi := 1.1, eu := 'mg/ml'));
 	AT9999RV310 : AI := (scale := (euLo := 0,  euHi := 2.0, eu := 'AU'));
 	AT9999RV320 : AI := (scale := (euLo := 0,  euHi := 2.0, eu := 'AU'));
+	fbReveal : ModbusTCPReveal();
 
 	//ColorWise
 	AT9999CWx  : AI := (scale := (rawLo := 0, rawHi := 16383, euLo := 0,  euHi := 1.0, eu := 'x'));
@@ -90,11 +98,11 @@ VAR
 	
 	// filter blocks
 	fbFT9999AFilt : fbMovingAverage;
-	FT9999ASize : UINT := 1000;
+	FT9999ASize : UINT := 500;
 	fbFT9999BFilt : fbMovingAverage;
-	FT9999BSize : UINT := 1000;
+	FT9999BSize : UINT := 500;
 	fbFT9999CFilt : fbMovingAverage;
-	FT9999CSize : UINT := 1000;
+	FT9999CSize : UINT := 500;
 	fbFT9999CfqFilt : fbMovingAverage;
 	FT9999CfqSize : UINT := 5;
 	FT9999CfqPV : lreal;
@@ -161,6 +169,13 @@ fbP9999B(sPort := P9999B);
 //Flow transmitters
 fbFT9999A(AI := FT9999A);
 fbFT9999AFilt(in := FT9999A.pv, size := FT9999ASize, out => FT9999A.pvfilt);
+
+//test
+FilterFactor := 1.0 - EXP(-0.001/tau);
+ftfirstorder := (1.0 - filterfactor) * ftfirstorder + filterfactor * FT9999A.pv;
+//-test
+
+
 fbFQ9999A(flow := FT9999A.pv, timeBaseMS := (1000.0*60.0));
 fbFT9999B(AI := FT9999B);
 fbFT9999BFilt(in := FT9999B.pv, size := FT9999BSize, out => FT9999B.pvfilt);
@@ -173,8 +188,12 @@ fbFT9999Cfq();
 fbFT9999CfqFilt(in := fbFT9999Cfq.pv, size := FT9999CfqSize, out => FT9999CfqPV);
 
 //Flow and Pressure Control
-FC9999A(pump := P9999A, ft := FT9999A);
-FT9999A_FLOWCAL(fq := fbFQ9999A, pump := P9999A, fc := FC9999A);
+IF FCForm = 1 THEN
+	FC9999A1(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A);
+ELSIF FCForm = 2 THEN
+	FC9999A2(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, ctrlData:= FC9999ACtrlData);
+END_IF
+FT9999A_FLOWCAL(fq := fbFQ9999A, pump := P9999A, FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS);
 
 //Pressure
 fbPT9999A(AI := PT9999A);
@@ -192,6 +211,7 @@ fbAT9999RV290(AI := AT9999RV290);
 fbAT9999RV300(AI := AT9999RV300);
 fbAT9999RV310(AI := AT9999RV310);
 fbAT9999RV320(AI := AT9999RV320);
+fbReveal();
 
 //ColorWise
 fbAT9999CWx(AI := AT9999CWx);

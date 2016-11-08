@@ -13,7 +13,8 @@ END_VAR
 VAR_IN_OUT
 	fq : FQ1; //flow totalizer
 	pump : sMasterflexPort;
-	fc : FC1;
+	FTOLS: OLSResult;
+	pumpOLS: OLSResult;
 END_VAR
 VAR_OUTPUT
 	startTimes : ARRAY[1..100] OF ULINT;
@@ -1684,8 +1685,8 @@ ELSE
 	ELSE
 		calibrationStatus := 1; //Success
 		//set both calibrations
-		fc.FTOLS := OLSFlowTemp;
-		fc.pumpOLS := OLSPumpTemp;  //All checks were good, the calibration is successful.
+		FTOLS := OLSFlowTemp;
+		pumpOLS := OLSPumpTemp;  //All checks were good, the calibration is successful.
 	END_IF
 END_IF
 ]]></ST>

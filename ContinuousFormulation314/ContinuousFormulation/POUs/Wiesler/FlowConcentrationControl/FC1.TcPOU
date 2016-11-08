@@ -4,20 +4,20 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FC1
 VAR_INPUT
 	uncalFTPV : LREAL := 0;
-	FTOLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
-	pumpOLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
 	PID : FB_CTRL_PID_EXT := (bsync := TRUE, eMode := E_CTRL_MODE.eCTRL_MODE_MANUAL);
 	sPID : ST_CTRL_PID_EXT_PARAMS := (
 		tCtrlCycleTime := T#100MS,
 		tTaskCycleTime := T#1MS, 
-		fKp := 10,
-		tTn := T#5S,
+		fKp := 12,
+		tTn := T#2S500MS,
 		fOutMaxLimit := 600.0,
 		fOutMinLimit := 0.0
 		
 	);
 END_VAR
 VAR_IN_OUT
+	FTOLS : OLSResult;
+	pumpOLS : OLSResult;
 	pump : sMasterflexPort;
 	ft : AI;
 END_VAR

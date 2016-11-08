@@ -3,18 +3,118 @@
   <POU Name="ModbusTCPReveal" Id="{eb92a042-d9e0-42c4-b278-20696ceefdc7}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK ModbusTCPReveal
 VAR_INPUT
-	IPAddress : STRING(15);
+	IPAddress : STRING(15) := '192.168.2.254';
 	modbusTCPPort : UINT := MODBUS_TCP_PORT;
 	fbRead : FB_MBReadRegs;
-	
+	fbDiag : FB_MBDiagnose;
+	numRegisters : WORD := 36;
+	startAddress : WORD := 0;
+	returnData : ARRAY [1..36] OF WORD;
+	scanModbus : BOOL := TRUE;
 END_VAR
 VAR_OUTPUT
+	heartbeat : INT;
+	status : INT;
+	lampState : BOOL;
+	samplingState : BOOL;
+	readingID : DINT;
+	results : ARRAY [1..12] OF REAL;	
+	temperature : real; //register 35-36
 END_VAR
 VAR
+	i : UINT;
+	is : UINT;
+	ie : UINT;
+	busyCounter : UINT := 0;
+	lastPollTime : UINT := 0;
+	pollCount : ULINT := 0;
+	busyLast : BOOL := FALSE;
 END_VAR
+
+
+// - Register(s)     Command             Type   Format
+// - -------------   ------------------- -----  ------------------------------------------------------------------------
+// -    1            Heartbeat            OUT   16-bit integer: continually increasing value
+// -    2            Status               OUT   16-bit integer: okay=0, anything else indicates an error condition
+// -    3            Lamp State           OUT   16-bit integer: 0=off, 1=on
+// -    4            Sampling State       OUT   16-bit integer: 0=off, 1=on
+// -    5 -    8     Unused               N/A   16-bit integers: unused, always=0
+// -    9 -   10     Reading ID           OUT   32-bit integer: reading identifier              tblReading.ReadingId
+// -   11 -   12     Result01             OUT   32-bit floating point                           tblReading.Result1
+// -   13 -   14     Result02             OUT   32-bit floating point                           tblReading.Result2
+// -   15 -   16     Result03             OUT   32-bit floating point                           tblReading.Result3
+// -   17 -   18     Result04             OUT   32-bit floating point                           tblReading.Result4
+// -   19 -   20     Result05             OUT   32-bit floating point                           tblReading.Result5
+// -   21 -   22     Result06             OUT   32-bit floating point                           tblReading.Result6
+// -   23 -   24     Result07             OUT   32-bit floating point                           tblReading.Result7
+// -   25 -   26     Result08             OUT   32-bit floating point                           tblReading.Result8
+// -   27 -   28     Result09             OUT   32-bit floating point                           tblReading.Result9
+// -   29 -   30     Result10             OUT   32-bit floating point                           tblReading.Result10
+// -   31 -   32     Result11             OUT   32-bit floating point                           tblReading.Result11
+// -   33 -   34     Result12             OUT   32-bit floating point                           tblReading.Result12
+// -   35 -   36     Temperature          OUT   32-bit floating point                           tblReading.Temperature
+// -   37 - 1060     Raw AU Values        OUT   set of up to 512 32-bit floating point values   tblReading.RawData
+// -        1061     Lamp On/Off          IN    = 0 means no command; > 0 means turn lamp on;   < 0 means turn lamp off
+// -        1062     Sampling Start/Stop  IN    = 0 means no command; > 0 means start sampling; < 0 means stop sampling
+// -        1063     Software Trigger     IN    = 0 means no command; > 0 means fire trigger
+//
+// Notes
+// ---------------------------------------------------------------------------------------------------------------------
+// > Modbus register and coil reference numbers start with "1", which corresponds to data at offset "0".
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[]]></ST>
+      <ST><![CDATA[//fbDiag(sIPAddr := IPAddress, bExecute := modbusTrigger);
+//This data read generally takes 6 milliseconds (bBusy is High for 6 milliseconds)
+fbRead(sIPAddr := IPAddress,
+        	nQuantity := numRegisters,
+			nMBAddr := startAddress,
+			cbLength := SIZEOF(returnData),
+			pDestAddr := ADR(returnData)
+		);
+IF fbRead.bBusy THEN //modbus read is in progress, capture read time and reset read request
+	busyCounter := busyCounter + 1;
+	fbRead.bExecute := FALSE;
+END_IF
+
+//If modbus request finished since last scan process the data
+IF NOT fbRead.bBusy AND busyLast THEN 
+	//Capture poll statistics
+	pollCount := pollCount + 1;
+	lastPollTime := busyCounter;
+	busyCounter := 0;
+	
+	//set values based on response
+	IF NOT fbRead.bError THEN
+		heartbeat := WORD_TO_INT(returnData[1]);
+		status := WORD_TO_INT(returnData[2]);
+		lampState := WORD_TO_BOOL(returnData[3]);
+		samplingState := WORD_TO_BOOL(returnData[4]);
+		readingID := wordArray2DINT(returnData[9], returnData[10]);
+		temperature := wordArray2Real(returnData[35], returnData[36]);
+	ELSE
+		heartbeat := -100;
+		status := -100;
+		temperature := -100.0;
+	END_IF
+	
+	//set output channels (results) based on poll result, sampling state, and status
+	FOR i := 1 TO 12 DO
+		is := 2*i+9;
+		ie := 2*i+10;
+		IF NOT fbRead.bError AND samplingState AND status = 0 THEN
+			results[i] := wordArray2Real(returnData[is], returnData[ie]);
+		ELSE
+			results[i] := -100.0;
+		END_IF
+	END_FOR
+END_IF
+
+//intitiate the next scan
+IF scanModbus AND NOT fbRead.bBusy AND NOT busyLast THEN
+	fbRead.bExecute := TRUE;
+END_IF 
+
+busyLast := fbRead.bBusy;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

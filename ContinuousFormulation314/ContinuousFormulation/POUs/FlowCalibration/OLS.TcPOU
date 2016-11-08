@@ -10,7 +10,7 @@ END_VAR
 VAR
 	fLength: LREAL;
 	f : LREAL;
-	i : INT := 0;
+	i : UINT := 0;
 	xSquaredSum : LREAL := 0;
 	xySum : LREAL := 0;
 	xBar : LREAL := 0;
@@ -30,7 +30,7 @@ END_VAR
 	RETURN;
 END_IF
 
-fLength := INT_TO_LREAL(length);
+fLength := UINT_TO_LREAL(length);
 
 FOR i := 1 TO length DO
 	xSquaredSum := xSquaredSum + x[i] * x[i];
