@@ -55,7 +55,7 @@ END_IF
 //Control algorithm
 IF execCounter >= TIME_TO_DWORD(ctrlData.execTime) THEN
 	execCounter := 0;
-	//Execute control algorthm
+	//Execute control algorithm
 	CASE modeAct OF
 		2: //Control is in Auto
 			outBase := pumpOLS.m * SP + pumpOLS.b;

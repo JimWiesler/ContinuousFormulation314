@@ -1,0 +1,102 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="CC1" Id="{c610cf04-8214-416c-b573-c59ba9a3f056}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK CC1
+//Concentration Control
+//Sets FC Setpoints to achieve target concentration.  At this point no feedback.
+VAR_INPUT
+	mode : UINT := 0; //0 = manual, 1=FCA and FCB setpoints set directly, 2=Final conc and total flow set directly
+	API_Concentration : LREAL := 1.0; //	API Concentration in mg/mL
+	conc : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 1.0);
+	a : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 2.0, mx := 70.0);
+	b : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 20.0, mx := 500.0);
+	c : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
+	sim : BOOL := TRUE;
+END_VAR
+VAR_IN_OUT
+	FCA : FC1b;
+	FTA : AI;
+	FCB : FC1b;
+	FTB : AI;
+	PumpA : sMasterflexPort;
+	PumpB : sMasterflexPort;
+	
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	cRatio : LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+CASE mode OF
+	0: //Manual mode, no calculations, no flow control changes
+	1: //Set FCA and FCB directly
+		a.sp := LIMIT(a.mn, a.rq, a.mx);
+		b.sp := LIMIT(b.mn, b.rq, b.mx);
+		//Set total flow and concentration
+		c.sp := a.sp + b.sp;
+		c.rq := c.sp;
+		IF c.sp > 1.0 THEN
+			conc.sp := a.sp * API_Concentration / c.sp;
+		ELSE
+			conc.sp := 0.0;
+		END_IF
+		conc.rq := conc.sp;
+		
+	2: //Set FCA and FCB via final flow and concentration
+		a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
+		b.rq := c.rq - a.rq;
+		IF a.rq < a.mn OR a.rq > a.mx OR b.rq < b.mn OR b.mx > b.mx THEN
+			//calculated flows outside ranges, ignore concentration and total flow requests
+			a.rq := a.sp;
+			b.rq := b.sp;
+			c.rq := c.sp;
+			conc.rq := conc.sp;
+		ELSE
+			//flows are in range, change the target to match the request
+			a.sp := a.rq;
+			b.sp := b.rq;
+			c.sp := c.rq;
+			conc.sp := conc.rq;
+		END_IF
+END_CASE
+
+//drive pumps and speed setpoints
+IF NOT sim AND mode = 1 THEN
+	//set flow control setpoint and pump on/off command for API
+	IF a.sp > a.mn THEN
+		FCA.SP := a.sp;
+		PumpA.bRun := TRUE;
+	ELSE
+		FCA.SP := a.mn;
+		PumpA.bRun := FALSE;
+	END_IF
+	//set flow control setpoint and pump on/off command for API
+	IF b.sp > b.mn THEN
+		FCB.SP := b.sp;
+		PumpB.bRun := TRUE;
+	ELSE
+		FCB.SP := b.mn;
+		PumpB.bRun := FALSE;
+	END_IF
+END_IF
+IF NOT sim AND mode = 2 THEN
+	//set flow control setpoint and pump on/off command for API and buffer (both have to be on or both off)
+	IF a.sp > a.mn AND b.sp > b.mn THEN
+		FCA.SP := a.sp;
+		PumpA.bRun := TRUE;
+		FCB.SP := b.sp;
+		PumpB.bRun := TRUE;
+	ELSE
+		FCA.SP := a.mn;
+		PumpA.bRun := FALSE;
+		FCB.SP := b.mn;
+		PumpB.bRun := FALSE;
+	END_IF
+END_IF
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

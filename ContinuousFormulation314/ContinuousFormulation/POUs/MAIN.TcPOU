@@ -22,7 +22,10 @@ VAR_INPUT
 	//Flow and Concentration Control
 	FC9999A1 : FC1;
 	FC9999A2 : FC1b;
+	FC9999B1 : FC1;
+	FC9999B2 : FC1b;
 	FCForm : UINT := 2;
+	AC9999C : CC1;
 		
 	
 END_VAR
@@ -35,7 +38,7 @@ VAR
 	//-test
 	heartbeat : DINT;
 	fbGetUnixTimeGlobal : fbGetUnixTime;
-	
+	temp : UINT;
 	MTWeight : sWeight;
 	
 	//Flowmeters
@@ -94,19 +97,21 @@ VAR
 	fbAT9999CWYY : AI1;
 	
 	//ultrasonic frequency input
-	fbFT9999Cfq : SonotecFreq;
-	
+	//fbFT9999Cfq : SonotecFreq;
+
 	// filter blocks
 	fbFT9999AFilt : fbMovingAverage;
 	FT9999ASize : UINT := 500;
+	FT9999AFiltTarget : LREAL := 500.0; //Target number of ms to for moving average
 	fbFT9999BFilt : fbMovingAverage;
 	FT9999BSize : UINT := 500;
+	FT9999BFiltTarget : LREAL := 500.0; //Target number of ms to for moving average
 	fbFT9999CFilt : fbMovingAverage;
-	FT9999CSize : UINT := 500;
+	FT9999CSize : UINT := 250;
 	fbFT9999CfqFilt : fbMovingAverage;
 	FT9999CfqSize : UINT := 5;
 	FT9999CfqPV : lreal;
-	
+
 	//Data logging
 	fbP9999ARPMlog : fbDatalogger_100ms;
 	fbP9999AFlowlog : fbDatalogger_100ms;
@@ -153,11 +158,11 @@ END_VAR
 fbGetUnixTimeGlobal();  //set global variable unixTime
 //Code that runs 1 time per second
 IF (heartbeat MOD 1000) = 0 THEN
-	FT9999ASize := LIMIT(500, DINT_TO_UINT((TRUNC(P9999A.fPeriodMS) * TRUNC(1500.0/P9999A.fPeriodMS))), 2500);
-	FT9999BSize := LIMIT(500, DINT_TO_UINT((TRUNC(P9999B.fPeriodMS) * TRUNC(1500.0/P9999B.fPeriodMS))), 2500);
+	temp := MIN(2499,DINT_TO_UINT(3*TRUNC(P9999A.fPeriodMS)));  //lower bound is 3 * period - want to make sure at least 3 periods are averaged
+	FT9999ASize := LIMIT(temp, DINT_TO_UINT((TRUNC(P9999A.fPeriodMS) * TRUNC(FT9999AFiltTarget/P9999A.fPeriodMS))), 2500);
+	temp := MIN(2499,DINT_TO_UINT(3*TRUNC(P9999B.fPeriodMS)));  //lower bound is 3 * period - want to make sure at least 3 periods are averaged
+	FT9999BSize := LIMIT(temp, DINT_TO_UINT((TRUNC(P9999B.fPeriodMS) * TRUNC(FT9999BFiltTarget/P9999B.fPeriodMS))), 2500);
 END_IF
-
-
 
 //Call serial line handlers
 MTSerial(sSendString := MTSendString, weight := MTWeight);
@@ -184,16 +189,21 @@ fbFT9999C(AI := FT9999C);
 fbFT9999CFilt(in := FT9999C.pv, size := FT9999CSize, out => FT9999C.pvfilt);
 fbFQ9999C(flow := FT9999C.pv, timeBaseMS := (1000.0*60.0));
 
-fbFT9999Cfq();
-fbFT9999CfqFilt(in := fbFT9999Cfq.pv, size := FT9999CfqSize, out => FT9999CfqPV);
+//fbFT9999Cfq();
+//fbFT9999CfqFilt(in := fbFT9999Cfq.pv, size := FT9999CfqSize, out => FT9999CfqPV);
 
-//Flow and Pressure Control
+//Flow and Concentration Control
 IF FCForm = 1 THEN
 	FC9999A1(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A);
+	FC9999B1(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B);
 ELSIF FCForm = 2 THEN
 	FC9999A2(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, ctrlData:= FC9999ACtrlData);
+	FC9999B2(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, ctrlData:= FC9999BCtrlData);
 END_IF
 FT9999A_FLOWCAL(fq := fbFQ9999A, pump := P9999A, FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS);
+FT9999B_FLOWCAL(fq := fbFQ9999B, pump := P9999B, FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS);
+AC9999C(FCA := FC9999A2, FTA := FT9999A, FCB:= FC9999B2, FTB := FT9999B, PumpA := P9999A, PumpB := P9999B);
+
 
 //Pressure
 fbPT9999A(AI := PT9999A);
@@ -261,6 +271,9 @@ fbAT9999CWYYlog(fData := AT9999CWYY.pv);
 CASE phase OF
 1:
 	FT9999A_FLOWCAL.start := TRUE;
+	phase := 0;
+2:
+	FT9999B_FLOWCAL.start := TRUE;
 	phase := 0;
 END_CASE
 ]]></ST>

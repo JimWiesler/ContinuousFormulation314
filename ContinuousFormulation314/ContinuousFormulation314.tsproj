@@ -288,10 +288,6 @@
 							<Type>INT</Type>
 						</Var>
 						<Var>
-							<Name>MAIN.fbFT9999Cfq.rawCount</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
 							<Name>MTSerial.stIn_Port</Name>
 							<Comment>
 								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
@@ -4461,9 +4457,6 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[7]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 7"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[8]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 8"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[9]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 9"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 13 (EL1502)">
-				<Link VarA="PlcTask Inputs^MAIN.fbFT9999Cfq.rawCount" VarB="CNT Inputs^Counter value"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 4 (EL3124) Flow">
 				<Link VarA="PlcTask Inputs^MAIN.FT9999A.raw" VarB="AI Standard Channel 2^Value"/>
