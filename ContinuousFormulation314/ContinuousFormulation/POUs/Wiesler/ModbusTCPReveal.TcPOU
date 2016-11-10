@@ -19,7 +19,9 @@ VAR_OUTPUT
 	samplingState : BOOL;
 	readingID : DINT;
 	results : ARRAY [1..12] OF REAL;	
-	temperature : real; //register 35-36
+	temperature : REAL; //register 35-36
+	concentration : LREAL := -1.0;
+	samplesCount : DINT := -1;
 END_VAR
 VAR
 	i : UINT;
@@ -29,6 +31,8 @@ VAR
 	lastPollTime : UINT := 0;
 	pollCount : ULINT := 0;
 	busyLast : BOOL := FALSE;
+	sampleCountTimeMS : ULINT := 1000;
+	lastReadingID : DINT := 0;
 END_VAR
 
 
@@ -107,6 +111,21 @@ IF NOT fbRead.bBusy AND busyLast THEN
 			results[i] := -100.0;
 		END_IF
 	END_FOR
+END_IF
+
+//Set output concentration in mg/mL
+IF samplingState <> TRUE OR lampState <> TRUE OR status <> 0 THEN
+	concentration := -100.0;  //error state
+ELSIF results[7] <= 0.25 THEN
+	concentration := results[7]; //low concentration model
+ELSE
+	concentration := results[6]; //high concentration model
+END_IF
+
+//Count the spectrometer reads
+IF (unixTime MOD sampleCountTimeMS) = 0 THEN
+	samplesCount := readingID - lastReadingID;
+	lastReadingID := readingID;
 END_IF
 
 //intitiate the next scan
