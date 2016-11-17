@@ -60,7 +60,7 @@ IF bReqTX THEN
 	8: //Start or Stop Pump
 		sPort.sRxSuffix := '$06'; // expected response <ACK>
 		IF sPort.nRun_RQ = 1 THEN
-			sPort.sSendString := '$02P01G0$0D'; // <STX>P01G<CR>
+			sPort.sSendString := '$02P01G0$0D'; // <STX>P01G0<CR>
 		ELSE 
 			sPort.sSendString := '$02P01H$0D'; // <STX>P01H<CR>
 		END_IF

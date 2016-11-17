@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FV3" Id="{b569a884-7965-4230-9107-2f4d98e5e443}" SpecialFunc="None">
+    <Declaration><![CDATA[// Implementation of a pseudo 3-way valve by controlling 2 outputs 
+FUNCTION_BLOCK FV3
+VAR_INPUT
+	sp : BOOL := FALSE;
+END_VAR
+VAR_OUTPUT
+	pv : BOOL := FALSE;
+END_VAR
+VAR
+	passiveSV AT %Q*: BOOL;
+	activeSV AT %Q*: BOOL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[passiveSV := NOT sp;
+activeSV := sp;
+pv := sp;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -5,13 +5,12 @@
 //Concentration Control
 //Sets FC Setpoints to achieve target concentration.  At this point no feedback.
 VAR_INPUT
-	mode : UINT := 0; //0 = manual, 1=FCA and FCB setpoints set directly, 2=Final conc and total flow set directly
+	mode : UINT := 0; //0 = manual, 1=Final conc and total flow set directly
 	API_Concentration : LREAL := 1.0; //	API Concentration in mg/mL
 	conc : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 1.0);
 	a : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 2.0, mx := 70.0);
 	b : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 20.0, mx := 500.0);
 	c : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
-	sim : BOOL := TRUE;
 END_VAR
 VAR_IN_OUT
 	FCA : FC1b;
@@ -29,71 +28,45 @@ VAR
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[
-CASE mode OF
-	0: //Manual mode, no calculations, no flow control changes
-	1: //Set FCA and FCB directly
-		a.sp := LIMIT(a.mn, a.rq, a.mx);
-		b.sp := LIMIT(b.mn, b.rq, b.mx);
-		//Set total flow and concentration
-		c.sp := a.sp + b.sp;
-		c.rq := c.sp;
-		IF c.sp > 1.0 THEN
-			conc.sp := a.sp * API_Concentration / c.sp;
-		ELSE
-			conc.sp := 0.0;
-		END_IF
-		conc.rq := conc.sp;
-		
-	2: //Set FCA and FCB via final flow and concentration
-		a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
-		b.rq := c.rq - a.rq;
-		IF a.rq < a.mn OR a.rq > a.mx OR b.rq < b.mn OR b.mx > b.mx THEN
-			//calculated flows outside ranges, ignore concentration and total flow requests
-			a.rq := a.sp;
-			b.rq := b.sp;
-			c.rq := c.sp;
-			conc.rq := conc.sp;
-		ELSE
-			//flows are in range, change the target to match the request
-			a.sp := a.rq;
-			b.sp := b.rq;
-			c.sp := c.rq;
-			conc.sp := conc.rq;
-		END_IF
-END_CASE
-
-//drive pumps and speed setpoints
-IF NOT sim AND mode = 1 THEN
-	//set flow control setpoint and pump on/off command for API
-	IF a.sp > a.mn THEN
-		FCA.SP := a.sp;
-		PumpA.bRun := TRUE;
-	ELSE
-		FCA.SP := a.mn;
-		PumpA.bRun := FALSE;
-	END_IF
-	//set flow control setpoint and pump on/off command for API
-	IF b.sp > b.mn THEN
-		FCB.SP := b.sp;
-		PumpB.bRun := TRUE;
-	ELSE
-		FCB.SP := b.mn;
-		PumpB.bRun := FALSE;
-	END_IF
+      <ST><![CDATA[//Set FCA and FCB via final flow and concentration
+a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
+b.rq := c.rq - a.rq;
+IF a.rq < 0.0 OR a.rq > a.mx OR b.rq < 0.0 OR b.mx > b.mx OR
+   c.rq < c.mn OR c.rq > c.mx OR conc.rq < 0.0 OR conc.rq > API_Concentration THEN
+	//calculated flows outside ranges, ignore concentration and total flow requests
+	a.rq := a.sp;
+	b.rq := b.sp;
+	c.rq := c.sp;
+	conc.rq := conc.sp;
+ELSE
+	//flows are in range, change the target to match the request
+	a.sp := a.rq;
+	b.sp := b.rq;
+	c.sp := c.rq;
+	conc.sp := conc.rq;
 END_IF
-IF NOT sim AND mode = 2 THEN
-	//set flow control setpoint and pump on/off command for API and buffer (both have to be on or both off)
-	IF a.sp > a.mn AND b.sp > b.mn THEN
+
+//set flow control setpoint and pump on/off command for API and buffer (both have to be on or both off)
+//drive pumps and speed setpoints
+IF mode = 1 THEN  //only set flow rates and pump states if in Auto
+	IF a.sp > a.mn AND b.sp > b.mn THEN //flows are all above minimums
 		FCA.SP := a.sp;
-		PumpA.bRun := TRUE;
+		IF NOT PumpA.bRun THEN
+			PumpA.nRun_RQ := 1;
+		END_IF
 		FCB.SP := b.sp;
-		PumpB.bRun := TRUE;
-	ELSE
+		IF NOT PumpB.bRun THEN
+			PumpB.nRun_RQ := 1;
+		END_IF
+	ELSE //a flow is too low
 		FCA.SP := a.mn;
-		PumpA.bRun := FALSE;
+		IF PumpA.bRun THEN
+			PumpA.nRun_RQ := 0;
+		END_IF
 		FCB.SP := b.mn;
-		PumpB.bRun := FALSE;
+		IF PumpB.bRun THEN
+			PumpB.nRun_RQ := 0;
+		END_IF
 	END_IF
 END_IF
 ]]></ST>

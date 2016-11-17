@@ -155,6 +155,10 @@
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\FV3.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\Wiesler\FlowConcentrationControl\testFC.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
@@ -172,14 +176,6 @@
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Wiesler\Masterflex\fbMasterflexSerial.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Wiesler\Masterflex\MasterflexFlow2Speed.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Wiesler\Masterflex\MasterflexSpeed2Flow.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>

@@ -5,7 +5,7 @@
 VAR_INPUT
 	start : BOOL := FALSE;  //command to start
 	setSpeedDuration : TIME := T#15S;  //Time to allow flow to stabilize before starting run
-	runTestDuration : TIME := T#5M; //Time to collect liquid on the scale
+	runTestDuration : TIME := T#3M; //Time to collect liquid on the scale
 	runTestWeight : LREAL := 20.0; // run for 100 grams minimum quantity of fluid on the scale for a completed flowrate
 	autoAdvance : BOOL := TRUE; //Determines if the test should automatically start the next flowrate.  Sometimes the flow is too much and the collection vessel has to be emptied
 	tubingType :INT := 14;
@@ -752,7 +752,7 @@ END_VAR
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"runTest.t &gt;= runTestDuration and MAIN.MTWeight.pv &gt;= runTestWeight"</v>
+                            <v n="Value">"runTest.t &gt;= runTestDuration and fq.total &gt;= runTestWeight"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">122L</v>
