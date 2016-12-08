@@ -244,6 +244,14 @@
 							<Type>INT</Type>
 						</Var>
 						<Var>
+							<Name>MAIN.AC9999C.lsh</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.AC9999C.lsl</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
 							<Name>MTSerial.stIn_Port</Name>
 							<Comment>
 								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
@@ -4421,6 +4429,10 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[7]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 7"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[8]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 8"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[9]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 9"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1004)">
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsh" VarB="Channel 2^Input"/>
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsl" VarB="Channel 1^Input"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 3 (EL2004)">
 				<Link VarA="PlcTask Outputs^MAIN.FV9999C.activeSV" VarB="Channel 2^Output"/>

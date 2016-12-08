@@ -6,11 +6,14 @@
 //Sets FC Setpoints to achieve target concentration.  At this point no feedback.
 VAR_INPUT
 	mode : UINT := 0; //0 = manual, 1=Final conc and total flow set directly
-	API_Concentration : LREAL := 1.0; //	API Concentration in mg/mL
+	API_Concentration : LREAL := 42.0; //	API Concentration in mg/mL
 	conc : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 1.0);
 	a : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 2.0, mx := 70.0);
 	b : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 20.0, mx := 500.0);
 	c : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
+	lsh AT %I* : BOOL;
+	lsl AT %I* : BOOL;
+	filling : BOOL := TRUE;
 END_VAR
 VAR_IN_OUT
 	FCA : FC1b;
@@ -18,58 +21,100 @@ VAR_IN_OUT
 	FCB : FC1b;
 	FTB : AI;
 	PumpA : sMasterflexPort;
-	PumpB : sMasterflexPort;
-	
+	PumpB : sMasterflexPort;	
 END_VAR
 VAR_OUTPUT
 END_VAR
 VAR
-	cRatio : LREAL;
+	lastMode : UINT := 0;
+	lastAPI_Concentration : LREAL := 42.0;
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Set FCA and FCB via final flow and concentration
-a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
-b.rq := c.rq - a.rq;
-IF a.rq < 0.0 OR a.rq > a.mx OR b.rq < 0.0 OR b.mx > b.mx OR
-   c.rq < c.mn OR c.rq > c.mx OR conc.rq < 0.0 OR conc.rq > API_Concentration THEN
-	//calculated flows outside ranges, ignore concentration and total flow requests
-	a.rq := a.sp;
-	b.rq := b.sp;
-	c.rq := c.sp;
-	conc.rq := conc.sp;
-ELSE
-	//flows are in range, change the target to match the request
-	a.sp := a.rq;
-	b.sp := b.rq;
-	c.sp := c.rq;
-	conc.sp := conc.rq;
+      <ST><![CDATA[//Determine constraints on concentration and final flow
+c.mx := a.mx + b.mx;
+c.mn := 0.0;
+conc.mx := API_Concentration;
+conc.mn := 0.0;
+c.sp := LIMIT(c.mn, c.sp, c.mx);
+conc.sp := LIMIT(conc.mn, conc.sp, conc.mx);
+
+//Check of concentration or flow requests are different
+IF c.rq <> c.sp OR conc.rq <> conc.sp OR API_Concentration <> lastAPI_Concentration THEN
+	a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
+	b.rq := c.rq - a.rq;
+	
+	//Check if both flows are in valid ranges
+	IF (a.rq = 0.0 OR (a.rq >= a.mn AND a.rq <= a.mx)) AND 
+       (b.rq = 0.0 OR (b.rq >= b.mn AND b.rq <= b.mx)) THEN
+		a.sp := a.rq;
+		b.sp := b.rq;
+		c.sp := c.rq;
+		conc.sp := conc.rq;
+	ELSE
+		IF API_Concentration <> lastAPI_Concentration THEN //API concetration changed outside acceptable range.  Go to manual
+			mode := 0;
+		END_IF
+		c.rq := c.sp;
+		conc.rq := conc.sp;		
+	END_IF
+END_IF
+
+// check level
+IF NOT lsl THEN
+	filling := TRUE;
+	ELSE IF lsh THEN
+		filling := FALSE;
+	END_IF
 END_IF
 
 //set flow control setpoint and pump on/off command for API and buffer (both have to be on or both off)
 //drive pumps and speed setpoints
-IF mode = 1 THEN  //only set flow rates and pump states if in Auto
-	IF a.sp > a.mn AND b.sp > b.mn THEN //flows are all above minimums
+IF mode = 1 AND lastMode <> 1 THEN
+	PumpA.nLocal_RQ := 0;
+	PumpB.nLocal_RQ := 0;
+END_IF
+IF mode = 1 and filling THEN  //only set flow rates and pump states if in Auto and filling (Not discharging)
+	//turn on or off pump A
+	IF a.sp >= a.mn THEN
+		FCA.modeSP := 2; //auto
 		FCA.SP := a.sp;
 		IF NOT PumpA.bRun THEN
 			PumpA.nRun_RQ := 1;
 		END_IF
+	ELSE
+		FCA.modeSP := 1; //manual
+		IF PumpA.bRun THEN
+			PumpA.nRun_RQ := 0;
+		END_IF
+	END_IF
+	//turn on or off pump B
+	IF b.sp >= b.mn THEN 
+		FCB.modeSP := 2; //auto
 		FCB.SP := b.sp;
 		IF NOT PumpB.bRun THEN
 			PumpB.nRun_RQ := 1;
 		END_IF
-	ELSE //a flow is too low
-		FCA.SP := a.mn;
-		IF PumpA.bRun THEN
-			PumpA.nRun_RQ := 0;
-		END_IF
+	ELSE
 		FCB.SP := b.mn;
 		IF PumpB.bRun THEN
 			PumpB.nRun_RQ := 0;
 		END_IF
 	END_IF
 END_IF
-]]></ST>
+//if mode has transitioned to 0 (manual) turn off pumps.
+IF mode = 0 AND lastMode <> 0 THEN
+	FCA.modeSP := 1; //manual
+	IF PumpA.bRun THEN
+		PumpA.nRun_RQ := 0;
+	END_IF
+	FCA.SP := b.mn;
+	IF PumpB.bRun THEN
+		PumpB.nRun_RQ := 0;
+	END_IF	
+END_IF
+lastMode := mode;
+lastAPI_Concentration := API_Concentration;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

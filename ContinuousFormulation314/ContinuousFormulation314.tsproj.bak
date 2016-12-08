@@ -4431,6 +4431,8 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999A.status" VarB="AI Standard Channel 2^Status"/>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999B.raw" VarB="AI Standard Channel 1^Value"/>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999B.status" VarB="AI Standard Channel 1^Status"/>
+				<Link VarA="PlcTask Inputs^MAIN.FT9999C.raw" VarB="AI Standard Channel 3^Value"/>
+				<Link VarA="PlcTask Inputs^MAIN.FT9999C.status" VarB="AI Standard Channel 3^Status"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 6 (EL3124) Reveal">
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV290.raw" VarB="AI Standard Channel 1^Value"/>
@@ -4441,10 +4443,6 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV310.status" VarB="AI Standard Channel 3^Status"/>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV320.raw" VarB="AI Standard Channel 4^Value"/>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV320.status" VarB="AI Standard Channel 4^Status"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 7 (EL3124)">
-				<Link VarA="PlcTask Inputs^MAIN.FT9999C.raw" VarB="AI Standard Channel 1^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.FT9999C.status" VarB="AI Standard Channel 1^Status"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 8 (EL3104)">
 				<Link VarA="PlcTask Inputs^MAIN.AT9999CWx.raw" VarB="AI Standard Channel 4^Value"/>

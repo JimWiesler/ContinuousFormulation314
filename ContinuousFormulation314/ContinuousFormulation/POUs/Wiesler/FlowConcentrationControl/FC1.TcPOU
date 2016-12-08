@@ -4,22 +4,14 @@
     <Declaration><![CDATA[FUNCTION_BLOCK FC1
 VAR_INPUT
 	uncalFTPV : LREAL := 0;
-	PID : FB_CTRL_PID_EXT := (bsync := TRUE, eMode := E_CTRL_MODE.eCTRL_MODE_MANUAL);
-	sPID : ST_CTRL_PID_EXT_PARAMS := (
-		tCtrlCycleTime := T#100MS,
-		tTaskCycleTime := T#1MS, 
-		fKp := 12,
-		tTn := T#2S500MS,
-		fOutMaxLimit := 600.0,
-		fOutMinLimit := 0.0
-		
-	);
+	PID : FB_CTRL_PID_EXT := (eMode := E_CTRL_MODE.eCTRL_MODE_MANUAL);
 END_VAR
 VAR_IN_OUT
 	FTOLS : OLSResult;
 	pumpOLS : OLSResult;
 	pump : sMasterflexPort;
 	ft : AI;
+	sPID : ST_CTRL_PID_EXT_PARAMS;
 END_VAR
 VAR_OUTPUT
 
@@ -28,21 +20,24 @@ VAR
 	PV : LREAL := 0.0;
 	OUT : LREAL := 0.0;
 	Out_H: LREAL := 0.0;
+	sync : BOOL;
 END_VAR
 ]]></Declaration>
     <Implementation>
       <ST><![CDATA[PV := FTOLS.m * ft.pvfilt + FTOLS.b;
-PID(stParams := sPID, fActualValue := PV);
+PID(stParams := sPID, fActualValue := PV, bSync := sync);
 OUT := DINT_TO_LREAL(LREAL_TO_DINT(PID.fOut*10.0))/10.0; //round to tenth
 
 CASE PID.eState OF
 E_CTRL_STATE.eCTRL_STATE_ACTIVE:
+	sync := TRUE;
 	IF OUT <> out_h THEN
 		pump.fSpeedSP_RQ := OUT;
 	END_IF
 ELSE
 	PID.fManSyncValue := pump.fSpeedSP;
 	PID.fSetpointValue := PV;
+	sync := FALSE;
 END_CASE
 
 out_h := OUT;]]></ST>

@@ -88,10 +88,10 @@ VAR
 	// filter blocks
 	fbFT9999AFilt : fbMovingAverage;
 	FT9999ASize : UINT := 500;
-	FT9999AFiltTarget : LREAL := 500.0; //Target number of ms to for moving average
+	FT9999AFiltTarget : LREAL := 1500.0; //Target number of ms to for moving average
 	fbFT9999BFilt : fbMovingAverage;
 	FT9999BSize : UINT := 500;
-	FT9999BFiltTarget : LREAL := 500.0; //Target number of ms to for moving average
+	FT9999BFiltTarget : LREAL := 1500.0; //Target number of ms to for moving average
 	fbFT9999CFilt : fbMovingAverage;
 	FT9999CSize : UINT := 500;
 	fbFT9999CfqFilt : fbMovingAverage;
@@ -172,8 +172,8 @@ fbFQ9999C(flow := FT9999C.pv, timeBaseMS := (1000.0*60.0));
 
 //Flow and Concentration Control
 IF FCForm = 1 THEN
-	FC9999A1(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A);
-	FC9999B1(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B);
+	FC9999A1(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, sPID := FC9999A1CtrlData);
+	FC9999B1(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, sPID := FC9999B1CtrlData);
 ELSIF FCForm = 2 THEN
 	FC9999A2(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, ctrlData:= FC9999ACtrlData);
 	FC9999B2(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, ctrlData:= FC9999BCtrlData);

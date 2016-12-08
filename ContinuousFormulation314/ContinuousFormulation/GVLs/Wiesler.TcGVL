@@ -12,6 +12,23 @@ VAR_GLOBAL PERSISTENT
 	FT9999B_OLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
 	P9999B_OLS : OLSResult := (m := 1.0, b := 0.0, R2 := 1.0, status := 0);
 	FC9999BCtrlData : ControllerData := (Kp := 15.0, Ti := T#5S, execTime := T#500MS);
+	FC9999A1CtrlData : ST_CTRL_PID_EXT_PARAMS := (
+		tCtrlCycleTime := T#100MS,
+		tTaskCycleTime := T#1MS, 
+		fKp := 7,
+		tTn := T#500MS,
+		fOutMaxLimit := 600.0,
+		fOutMinLimit := 1.0		
+	);
+	FC9999B1CtrlData : ST_CTRL_PID_EXT_PARAMS := (
+		tCtrlCycleTime := T#100MS,
+		tTaskCycleTime := T#1MS, 
+		fKp := 1,
+		tTn := T#2S500MS,
+		fOutMaxLimit := 600.0,
+		fOutMinLimit := 1.0		
+	);
+
 END_VAR]]></Declaration>
   </GVL>
 </TcPlcObject>
