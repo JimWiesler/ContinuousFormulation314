@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fShiftArray" Id="{46f578ef-0c43-4c9c-9606-e5f255ef0a36}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION fShiftArray : BOOL
+VAR_INPUT
+	cbData : UDINT; // size of datatype in array (count of bytes)
+	pData : POINTER TO BYTE; // new data
+	
+	cbBuffer : UDINT; // size of array
+	pBuffer : POINTER TO BYTE; // start of array
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[
+FW_MemMove(pDest := pBuffer + cbData, pSrc := pBuffer, cbLen := cbBuffer - cbData);
+
+FW_MemMove(pDest := pBuffer, pSrc := pData, cbLen := cbData);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

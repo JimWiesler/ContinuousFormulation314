@@ -10,6 +10,9 @@
     <PouCall>
       <Name>FlowCheck</Name>
     </PouCall>
+    <PouCall>
+      <Name>StartStopSequence_CC1Test</Name>
+    </PouCall>
     <TaskFBGuid>{131a48fd-464d-48ba-b41a-64dad92cd723}</TaskFBGuid>
     <Fb_init>{b785efc6-d36e-4151-a571-eecf37384cea}</Fb_init>
     <Fb_exit>{4f063971-2f96-4f08-81df-02f7b804efa8}</Fb_exit>

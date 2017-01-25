@@ -1,0 +1,98 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FVC2" Id="{5d78a90d-0bfc-4c43-a52d-c2d747e60cfd}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FVC2
+VAR_INPUT
+	mode : UINT := 0; // 0 = manual, 1 = valve controlled by conc spec
+	tol : LREAL := 0.01; // +/- percent that concentration can be off from sp 
+	conc : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0); //mg/mL *** TODO: Change to get actual measured conc (see below.. expected conc.. UPDATE)
+	concExpected : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
+	c : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0); // mL/min
+END_VAR
+VAR_IN_OUT
+	FTC : AI;
+	FV : FV3;
+END_VAR
+VAR_OUTPUT
+END_VAR
+VAR
+	cLow : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
+	cHigh : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
+	outSpec : BOOL := FALSE;
+	t : ULINT := unixTime;
+	
+	nRate : DINT := 100; // TODO : this is determined based on dose size and flowRate
+	dosesToDivert : DINT := 10; // TODO : calculate - this is number of doses (array index delta) between conc measurement & valve
+	doseBuffer : DINT := 3; // number of doses to divert prior to initial BAD conc reading (i.e. switch the valve before the bad stuff hits)
+	
+	nPoints : DINT := 1000;
+	nCount : DINT := 0;
+	expectedConc : ARRAY[0..nPoints] OF LREAL;
+	inSpec : ARRAY[0..nPoints] OF BOOL;
+	doseStartT : ARRAY[0..nPoints] OF ULINT;
+	
+	ACIndex : DINT := doseBuffer; 
+	FVRefIndex : DINT := ACIndex + dosesToDivert;
+	lastBad : ULINT := 0;
+	
+	i : DINT := 0;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[t := unixTime;
+
+// TODO : code to update nRate based on flowRate?
+
+// Setting indexes to reference arrays later...
+IF t MOD DINT_TO_ULINT(nRate) = 0 THEN
+	
+	// shift arrays
+	FOR i := nPoints TO 1 BY -1 DO
+		expectedConc[i] := expectedConc[i-1];
+		inSpec[i] := inSpec[i-1];
+		doseStartT[i] := doseStartT[i-1];
+	END_FOR
+	
+	// initialize first index
+	expectedConc[ACIndex] := concExpected.sp;
+	inSpec[0] := FALSE; // initialize as "bad" conc dose ... change this??
+	doseStartT[ACIndex] := t;
+END_IF
+
+// not sure if this is necessary...
+cLow.mn := concExpected.mn;
+cHigh.mn := concExpected.mn;
+cLow.mx := concExpected.mx;
+cHigh.mx := concExpected.mx;
+
+// set tolerance limit based on percent tolerance
+cLow := LIMIT(cLow.mn, concExpected.sp - tol * concExpected.sp, cLow.mx);
+cHigh := LIMIT(cHigh.mn, concExpected.sp + tol * concExpected.sp, cHigh.mx);
+
+// check for out of spec concentration
+IF (conc.sp < cLow.sp) OR (conc.sp > cHigh.sp) THEN
+	lastBad := doseStartT[ACIndex];
+	inSpec[ACIndex] := FALSE;
+	
+	// set buffer to "bad" conc - this is redundent w check for "good" conc... remove?
+	FOR i := 0 TO doseBuffer DO
+		inSpec[i] := FALSE;
+	END_FOR
+END_IF
+
+// check for concentration in spec AND sufficient time passed since "bad"
+IF (conc.sp > cLow.sp) AND (conc.sp < cHigh.sp) AND ((t - lastBad) > doseBuffer*nRate) THEN
+	// check if sufficient time has passed since last bad concentration
+	inSpec[ACIndex] := TRUE;
+END_IF
+
+IF (inSpec[FVRefIndex] = TRUE) THEN
+	FV.sp := TRUE;
+ELSE
+	FV.sp := FALSE; // divert stream
+END_IF
+
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

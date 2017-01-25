@@ -38,6 +38,8 @@ VAR
 	fbSuspend : TP;
 	newSP : BOOL;
 	newPumpOn : BOOL;
+	pumpModeOn : BOOL;
+	lastPumpModeOn : BOOL;
 	suspendTime : TIME := T#2S;
 	
 END_VAR
@@ -45,17 +47,18 @@ END_VAR
     <Implementation>
       <ST><![CDATA[PV := FTOLS.m * ft.pvfilt + FTOLS.b;
 SP := MAX(SP, SPMin);
+pumpModeOn := ((NOT pump.bLocal AND pump.bRun));
 execCounter := execCounter + 1;
 
 modeAct := modeSP;
 //Calculate integration suspend - when SP changes or the mode has just gone to Auto.
 newSP := (lastSP <> SP OR (modeAct = 2 AND lastModeAct <> 2));
-//newPumpOn := (lastPump <> nowPump);
+newPumpOn := (lastPumpModeOn <> pumpModeOn);
 IF newSP THEN
 	//lastIntegral := lastIntegral * SP/MAX(lastSP, 0.01);
 	//lastIntegral := LIMIT(outMin, lastIntegral, outMax);
 END_IF
-fbSuspend(IN := newSP, PT := suspendTime);
+fbSuspend(IN := (newSP OR newPumpOn), PT := suspendTime);
 
 //Control algorithm
 IF execCounter >= TIME_TO_DWORD(ctrlData.execTime) THEN
@@ -89,6 +92,7 @@ IF execCounter >= TIME_TO_DWORD(ctrlData.execTime) THEN
 END_IF
 
 lastSP := SP;
+lastPumpModeOn := pumpModeOn;
 lastModeAct := modeAct;
 ]]></ST>
     </Implementation>
