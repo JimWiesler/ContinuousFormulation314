@@ -1,0 +1,23 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="randn" Id="{a20e67f9-5ce0-4a69-8117-216b191f56de}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION randn : lreal
+VAR_INPUT
+	x1 : LREAL;
+	x2 : LREAL;
+	mean : LREAL := 0.0;
+	sigma : LREAL := 1.0;
+END_VAR
+VAR
+	y : LREAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//http://www.design.caltech.edu/erik/Misc/Gaussian.html
+x1 := limit(0.01, x1, 1.0); //make sure x1 never is close enough to 0 to fault the LN function
+y := SQRT(-2.0 * LN(x1)) * COS(2.0 * PI * x2);
+randn := (y * sigma) + mean;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

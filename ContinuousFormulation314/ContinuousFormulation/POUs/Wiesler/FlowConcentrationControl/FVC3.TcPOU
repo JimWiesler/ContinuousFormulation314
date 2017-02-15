@@ -2,86 +2,111 @@
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
   <POU Name="FVC3" Id="{1ccc80b6-3314-432f-9d58-685ee6ab8b6c}" SpecialFunc="None">
     <Declaration><![CDATA[FUNCTION_BLOCK FVC3
+
 VAR_INPUT
 	mode : UINT := 0; // 0 = manual, 1 = valve controlled by conc spec
-	tol : LREAL := 0.01; // +/- percent that concentration can be off from sp 
-	conc : LREAL := -1.0; // ModbusTCPReveal?? - AT9999C.pv ??
-	targetConc : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
-	c : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0); // mL/min
-	
-	FTA : AI; // do we need to use OLS results? .. using pv, not pvfilt..
+	FTA : AI; 
 	FTB : AI;
-	scanMS : INT := 50;
-	timeBaseMS : INT := 1;
-	API_Concentration : LREAL := 42; // mg/mL
+	ATC : ModbusTCPReveal();
+	cc : CC1;
+	scanMS : LREAL := 1.0;  // number of milliseconds per scan of this module
+	timeBaseMS : LREAL := 1000.0*60.0; // time base in milliseconds of the flow measurement.  Like mL/min timebase is minutes, so 60*1000 milliseconds
+	API_Concentration : LREAL := 42.0; // mg/mL
 END_VAR
 VAR_IN_OUT
-	FTC : ModbusTCPReveal();
 	FV : FV3;
-	PumpA : sMasterflexPort;
-	PumpB : sMasterflexPort;
 END_VAR
 VAR_OUTPUT
 END_VAR
 VAR CONSTANT
-	nPoints : DINT := 1000;
+	nPoints : DINT := 200;
 END_VAR
 VAR
-	FQAscan : LREAL := 0;
-	FQBscan : LREAL := 0;
-	FQA: LREAL := 0;
-	FQB: LREAL := 0;
-	FQAscanAdd : LREAL := 0;
-	FQBscanAdd : LREAL := 0;
-	temp : LREAL := 0;
-	elementMass : LREAL := 0;
+	//Variables for calculating when new concentration element has been created
+	FQAscan : LREAL := 0.0;
+	FQBscan : LREAL := 0.0;
+	FQA: LREAL := 0.0;
+	FQB: LREAL := 0.0;
+	FQAscanAdd : LREAL := 0.0;
+	FQBscanAdd : LREAL := 0.0;
+	temp : LREAL := 0.0;
 	
-	cLow : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
-	cHigh : sAnalogConstraint := (sp := 0.0, rq := -100.0, mn := 0.0, mx := 500.0);
-	outSpec : BOOL := FALSE;
-	t : ULINT := unixTime;
+	//Setup geometry and element size
+	elementMass : LREAL := 0.5;  //Each element has this amount in grams - change here may require arrays to be bigger
+	massBeforePAT : LREAL := 23.0;  //calculated based on current tubing geometry
+	PATelement : INT; //element number for PAT
+	massBeforeDivert : LREAL := 31.0;
+	divertElement : INT; //element number for diversion tee
+
+	//Defaults
+	PATConcDefault : LREAL := -100.0;
+	PATCountDefault : UINT := 0;
+	PATVarianceDefault : LREAL := 0.0;
+	elementConcentration : LREAL := -100.0;
+	PATTimeDefault : ULINT := 0;
+	elStatusDefault : elementStatus := Bad;
 	
-	FT2PAT : DINT := 100;
-	
-	
-	nCount : DINT := 0;
-	expectedConc : ARRAY[0..nPoints] OF LREAL;
-	actualConc : ARRAY[0..nPoints] OF LREAL;
-	inSpec : ARRAY[0..nPoints] OF BOOL;
+	//arrays
+	mixTime : ARRAY[0..nPoints] OF ULINT;
+	rawConc : ARRAY[0..nPoints] OF LREAL; //calculated raw concentration - from API and Buffer conc/flow at mixing tee
+	modeledConc : ARRAY[0..nPoints] OF LREAL; //Adjusted conc with mixing effects from laminar flow and back mixer
+	PATConc : ARRAY[0..nPoints] OF LREAL; //Average of unique PAT results for the element in the flow cell
+	PATCount : ARRAY[0..nPoints] OF UINT; //Count of unique PAT results for the element in the flow cell
+	PATVariance : ARRAY[0..nPoints] OF LREAL; //Variance of unique PAT results for the element in the flow cell
+		// Get stdev from variance via sqrt(variance/count) or sqrt(variance/(count-1))
 	PATTime : ARRAY[0..nPoints] OF ULINT;
-	FTTIme : ARRAY[0..nPoints] OF ULINT;
-	initConc : LREAL := -100;
-	initSpec : BOOL :=FALSE;
+	elStatus : ARRAY[0..nPoints] OF elementStatus;
 	
-	ACIndex : DINT := FT2PAT; 
-	lastBad : ULINT := 0;
+	//values to determine in spec or out of spec
+	concSpecHi : LREAL := 0.1; // in spec hi limit is concentration control setpoint + this value
+	concSpecLo : LREAL := 0.1; // in spec lo limit is concentration control setpoint - this value
 	
-	i : DINT := 0;
-	goodCount : DINT := 0;
-	goodToOpen : DINT := 10;
+	//variable to track diversion logic
+	divert : BOOL := TRUE;
 	
+	//value to determine if PAT reading is new
+	lastReadingID : DINT := 0;
+	lastElStatus : elementStatus := Bad;
+	PATtimeoutTime : TIME := T#100MS;
+	fbPATtimeout : TON; //timer for determing timeout of PAT
 	
-	elementConcentration: LREAL := 0;
-	concSum : LREAL := 0;
-	concCount : DINT := 0;
-	lastPAT : LREAL := 0;
-	lastPATTime : ULINT := 0;
-	stalePAT : BOOL := FALSE;
-	PATScanMS : ULINT := 50;
+	//local variable
+	i : INT := 0;
+	firstElementTimeMS : ULINT;  //used on network logic to subscribe to changes in arrays
+	lastPATConcAverage: LREAL;
+	
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[t := unixTime;
+      <ST><![CDATA[PATelement := LREAL_TO_INT(massBeforePAT/elementMass);  //PAT element in array
+divertElement := LREAL_TO_INT(massBeforeDivert/elementMass);  //Divert tee element in array
 
-// Calculate element
-// integrate flow transmitter values
+// check for new PAT reading
+fbPATtimeout(IN := (lastReadingID = ATC.readingID), PT := PATtimeoutTime);
+
+IF lastReadingID <> ATC.readingID THEN
+	//calculate running average and variance:
+	// http://dsp.stackexchange.com/questions/811/determining-the-mean-and-standard-deviation-in-real-time
+	IF PATCount[PATelement] < 1 THEN
+		PATConc[PATelement] := 0.0; //if no measurements yet set previous concentration to 0
+	END_IF
+	lastPATConcAverage := PATConc[PATelement];                                                         //prev_mean
+	PATCount[PATelement] := PATCount[PATelement] + 1;                      							   //n
+	PATConc[PATelement] := lastPATConcAverage + (ATC.pv - lastPATConcAverage)/PATCount[PATelement];    //m
+	PATVariance[PATelement] := PATVariance[PATelement] + (ATC.pv - PATConc[PATelement]) * (ATC.pv - lastPATConcAverage); //S
+	// where S = n * variance .... http://people.ds.cam.ac.uk/fanf2/hermes/doc/antiforgery/stats.pdf
+	PATTime[PATelement] := unixTime;
+END_IF
+
+// integrate flow transmitter values.
 FQAscan := FTA.pv*scanMS/timeBaseMS;
 FQBscan := FTB.pv*scanMS/timeBaseMS;
 temp := FQA + FQB + FQAscan + FQBscan;
 
+//if new flow makes the incoming element large enough, capture a flow element, shift the arrays, execute concentration modeling and control system
 IF (temp >= elementMass) THEN
 	// determine how much of new API and buffer flow should be added
-	temp := elementMass - FQA - FQB;
+	temp := elementMass - FQA - FQB;  //amount of element added this scan
 	FQAscanAdd := FQAscan * temp / (FQAscan + FQBscan);
 	FQBscanAdd := FQBScan * temp / (FQAscan + FQBscan);
 	
@@ -89,110 +114,66 @@ IF (temp >= elementMass) THEN
 	FQB := FQB + FQBscanAdd;
 	elementConcentration := API_concentration*FQA/(FQA + FQB);
 	
-//	// shift array
-//	FOR i := nPoints TO 1 BY -1 DO
-//		expectedConc[i] := expectedConc[i-1];
-//		actualConc[i] := actualConc[i-1];
-//		inSpec[i] := inSpec[i-1];
-//		PATTime[i] := PATTime[i-1];
-//		FTTime[i] := FTTime[i-1];
-//	END_FOR
+	//Set current element status.  If PAT has timed out, set status to Timeout.
+	IF fbPATtimeout.Q THEN  //no update from PAT within timeout time
+		elStatus[PATelement] := Timeout;
+		lastElStatus := Timeout;
+	ELSIF PATCount[PATelement] = 0 THEN //no PAT update for this element, but PAT has not timedout
+		IF lastElStatus = Good THEN
+			elStatus[PATelement] := Unknown;  //if last PAT result was good, set this to unknown
+		ELSE
+			elStatus[PATelement] := lastElStatus; //otherwise, set it to Timeout or Bad to make sure unchecked elements are failsafe
+		END_IF
+	ELSIF PATConc[PATelement] > (cc.conc.sp - concSpecLo) AND PATConc[PATelement] < (cc.conc.sp + concSpecHi) THEN //within spec
+		elStatus[PATelement] := Good;
+		lastElStatus := Good;
+	ELSE //otherwise mark as bad
+		elStatus[PATelement] := Bad;
+		lastElStatus := Bad;
+	END_IF
 	
-//	// initialize first index
-//	expectedConc[0] := elementConcentration;
-//	FTTime[0] := t;
-//	inSpec[0] := FALSE; // initialize as "bad" conc dose ... change this??
-//	PATTime[ACIndex] := t; // or should this be ACIndex + 1 ?? think on how determining ACIndex
-//	actualConc[0] := -100;
-		
-	// shift bytes & initialize new element
-	fShiftArray(cbData := SIZEOF(elementConcentration), pData := ADR(elementConcentration),
-				cbBuffer := SIZEOF(expectedConc), pBuffer := ADR(expectedConc)
-	);
-	fShiftArray(cbData := SIZEOF(initConc), pData := ADR(initConc),
-				cbBuffer := SIZEOF(actualConc), pBuffer := ADR(actualConc)
-	);
-	fShiftArray(cbData := SIZEOF(initSpec), pData := ADR(initSpec),
-				cbBuffer := SIZEOF(inSpec), pBuffer := ADR(inSpec)
-	);
-	fShiftArray(cbData := SIZEOF(t), pData := ADR(t),
-				cbBuffer := SIZEOF(PATTime), pBuffer := ADR(PATTime)
-	);
-	fShiftArray(cbData := SIZEOF(t), pData := ADR(t),
-				cbBuffer := SIZEOF(FTTime), pBuffer := ADR(FTTime)
-	);
+	// shift arrays & initialize new element
+	fShiftArray(sizeofArrayElement := SIZEOF(unixTime), pInsertedElement := ADR(unixTime),
+				sizeofArray := SIZEOF(mixTime), pArray := ADR(mixTime));
+	fShiftArray(sizeofArrayElement := SIZEOF(elementConcentration), pInsertedElement := ADR(elementConcentration),
+				sizeofArray := SIZEOF(rawConc), pArray := ADR(rawConc));
+	fShiftArray(sizeofArrayElement := SIZEOF(elementConcentration), pInsertedElement := ADR(elementConcentration),
+				sizeofArray := SIZEOF(modeledConc), pArray := ADR(modeledConc)); //Change this when modeling
+	fShiftArray(sizeofArrayElement := SIZEOF(PATConcDefault), pInsertedElement := ADR(PATConcDefault),
+				sizeofArray := SIZEOF(PATConc), pArray := ADR(PATConc));
+	fShiftArray(sizeofArrayElement := SIZEOF(PATCountDefault), pInsertedElement := ADR(PATCountDefault),
+				sizeofArray := SIZEOF(PATCount), pArray := ADR(PATCount));
+	fShiftArray(sizeofArrayElement := SIZEOF(PATVarianceDefault), pInsertedElement := ADR(PATVarianceDefault),
+				sizeofArray := SIZEOF(PATVariance), pArray := ADR(PATVariance));
+	fShiftArray(sizeofArrayElement := SIZEOF(PATTimeDefault), pInsertedElement := ADR(PATTimeDefault),
+				sizeofArray := SIZEOF(PATTime), pArray := ADR(PATTime));
+	fShiftArray(sizeofArrayElement := SIZEOF(elStatusDefault), pInsertedElement := ADR(elStatusDefault),
+				sizeofArray := SIZEOF(elStatus), pArray := ADR(elStatus));
+	firstElementTimeMS := unixTime;
+	
+	//Determine divert status
+	divert := FALSE;
+	FOR i := (PATelement + 1) TO divertElement BY 1 DO
+		IF elStatus[i] = Bad OR elStatus[i] = Timeout THEN
+			divert := TRUE;
+		END_IF
+	END_FOR
 
-	actualConc[ACIndex] := concSum / concCount;
-	concCount := 0;
-	
-	FQA := FQAscan - FQAscanAdd;
+	FQA := FQAscan - FQAscanAdd; //retain the remainder in FQA and FQB
 	FQB := FQBscan - FQBscanAdd;
 ELSE 
-	// not enough for new elmenet so continue to accumulate flows
+	// not enough for new element so continue to accumulate flows
 	FQA := FQA + FQAscan;
 	FQB := FQB + FQBscan;
-	
 END_IF
 
- 
-// not sure if this is necessary...
-cLow.mn := targetConc.mn;
-cHigh.mn := targetConc.mn;
-cLow.mx := targetConc.mx;
-cHigh.mx := targetConc.mx;
-
-// set tolerance limit based on percent tolerance
-cLow.sp := LIMIT(cLow.mn, targetConc.sp - tol * targetConc.sp, cLow.mx);
-cHigh.sp := LIMIT(cHigh.mn, targetConc.sp + tol * targetConc.sp, cHigh.mx);
-
-// check for new PAT reading
-IF conc <> lastPAT THEN
-	concSum := concSum + conc;
-	concCount := concCount + 1;
-	lastPAT := conc;
-	lastPATTime := t;
-	stalePAT := FALSE;
+//control valve position if in auto
+IF mode = 1 THEN
+	FV.sp := NOT divert; // waste: false; filler: true
 END_IF
 
-// TODO : check for stale PAT readings
-IF (t - lastPATTime) > PATScanMS*2 THEN
-	// divert immediately
-	FV.sp := FALSE;
-	IF (t - lastPATTime) > PATScanMS*5 THEN
-		// Shutdown
-		IF PumpA.bRun THEN
-			PumpA.nRun_RQ := 0;
-		END_IF
-		IF PumpB.bRun THEN
-			PumpB.nRun_RQ := 0;
-		END_IF
-	END_IF
-END_IF
-
-// check for out of spec concentration
-IF (conc < cLow.sp) OR (conc > cHigh.sp) THEN
-	lastBad := PATTime[ACIndex];
-	inSpec[ACIndex] := FALSE;
-	
-	// Divert immediately
-	FV.sp := FALSE;
-	goodCount := 0;
-END_IF
-
-// check for concentration in spec AND sufficient time passed since "bad"
-// TODO : update w volume element
-IF (actualConc[ACIndex] > cLow.sp) AND (actualConc[ACIndex] < cHigh.sp) THEN
-	// check if sufficient time has passed since last bad concentration
-	IF (lastPAT <> conc) THEN // just got new good value
-		inSpec[ACIndex] := TRUE;
-		goodCount := goodCount + 1;
-		IF goodCount >= goodToOpen THEN // has been long enough since last "bad" conc
-			FV.sp := TRUE;
-		END_IF
-	END_IF
-	
-END_IF
-]]></ST>
+//Update last values
+lastReadingID := ATC.readingID;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>

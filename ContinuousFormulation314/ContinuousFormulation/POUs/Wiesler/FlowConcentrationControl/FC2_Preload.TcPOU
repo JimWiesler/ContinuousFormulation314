@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="FC2_Preload" Id="{323f488e-0b4b-4bc5-bbe9-f03336c41393}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK FC2_Preload
+VAR_INPUT
+	SP : LREAL := 0.0;
+	uncalFTPV : LREAL := 0;
+	modeSP : UINT := 1; //controller mode Setpoint.  1 is Manual, 2 is Auto
+	outMax : LREAL := 600.0;
+	outMin : LREAL := 10.0; //don't allow pump speed to go below 10 RPM
+	SPMin : LREAL := 1.0; //don't allow SP to be less than 1.0 mL/min
+END_VAR
+VAR_IN_OUT
+	FTOLS : OLSResult;
+	pumpOLS : OLSResult;
+	pump : sMasterflexPort;
+	ft : AI;
+	ctrlData : ControllerData;
+END_VAR
+VAR_OUTPUT
+
+END_VAR
+VAR
+	PV : LREAL := 0.0;
+	outBase : LREAL := 0.0 ; //Base OUT value predicted by flow vs. speed correlation
+	OUT : LREAL := 0.0;
+	lastOUT: LREAL := 0.0;
+	modeAct : UINT := 2; //controller mode Actual.  1 is Manual, 2 is Auto, 3 is Suspend
+	lastModeAct : UINT;
+	execCounter : DWORD := 0;
+	iError : LREAL;
+	integral : LREAL;
+	integralAtOutMax : LREAL;
+	integralAtOutMin : LREAL;
+	lastIntegral : LREAL;
+	lastSP : LREAL;
+	
+	fbSuspend : TP;
+	newSP : BOOL;
+	newPumpOn : BOOL;
+	pumpModeOn : BOOL;
+	lastPumpModeOn : BOOL;
+	suspendTime : TIME := T#2S;
+	
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//PV := FTOLS.m * ft.pvfilt + FTOLS.b;  //DO NOT scale ft to adjust for zero
+PV := ft.pvfilt;
+SP := MAX(SP, SPMin);
+pumpModeOn := ((NOT pump.bLocal AND pump.bRun));
+execCounter := execCounter + 1;
+
+modeAct := modeSP;
+//Calculate integration suspend - when SP changes or the mode has just gone to Auto.
+newSP := (lastSP <> SP OR (modeAct = 2 AND lastModeAct <> 2));
+newPumpOn := (lastPumpModeOn <> pumpModeOn);
+IF newSP THEN
+	//lastIntegral := lastIntegral * SP/MAX(lastSP, 0.01);
+	//lastIntegral := LIMIT(outMin, lastIntegral, outMax);
+END_IF
+fbSuspend(IN := (newSP OR newPumpOn), PT := suspendTime);
+
+//Control algorithm
+IF execCounter >= TIME_TO_DWORD(ctrlData.execTime) THEN
+	execCounter := 0;
+	//Execute control algorithm
+	CASE modeAct OF
+		2: //Control is in Auto
+			outBase := pumpOLS.m * SP + pumpOLS.b;
+			//calculate new integral component unless integration is suspended
+			IF fbSuspend.Q OR ((modeSP = 2) AND (pump.bLocal OR NOT pump.bRun)) THEN
+				iError := 0.0;
+			ELSE
+				iError := (SP - PV) * ctrlData.Kp * DWORD_TO_LREAL(TIME_TO_DWORD(ctrlData.execTime))/DWORD_TO_LREAL(TIME_TO_DWORD(ctrlData.Ti));
+			END_IF		
+			//calculate integral taking into account the ARW and Output min and max
+			integralAtOutMax := (outMax - outBase);  //integral value that would make OUT = outMax
+			integralAtOutMin := (outMin - outBase);  //integral value that would make OUT = outMin
+			integral := MAX(integralAtOutMin, MIN(integralAtOutMax,(lastIntegral + iError)));
+			//set output to be the bias calculated by the flow vs. speed correlation and integral action
+			OUT := outBase + integral;
+			OUT := DINT_TO_LREAL(LREAL_TO_DINT(OUT*10.0))/10.0; //round to tenth
+			IF OUT <> lastOut THEN
+				pump.fSpeedSP_RQ := OUT;
+			END_IF
+		1: //Control is in Manual
+			integral := 0.0;
+			OUT := 0.0;		
+	END_CASE
+	lastIntegral := integral;
+	lastOut := OUT;
+END_IF
+
+lastSP := SP;
+lastPumpModeOn := pumpModeOn;
+lastModeAct := modeAct;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

@@ -16,9 +16,9 @@ VAR_INPUT
 	autoFill : UINT := 0; //0 = manual (not filling), 1 = auto fill ON
 END_VAR
 VAR_IN_OUT
-	FCA : FC1b;
+	FCA : FC2_Preload;
 	FTA : AI;
-	FCB : FC1b;
+	FCB : FC2_Preload;
 	FTB : AI;
 	PumpA : sMasterflexPort;
 	PumpB : sMasterflexPort;	
@@ -40,8 +40,8 @@ conc.mn := 0.0;
 c.sp := LIMIT(c.mn, c.sp, c.mx);
 conc.sp := LIMIT(conc.mn, conc.sp, conc.mx);
 
-//Check of concentration or flow requests are different
-IF c.rq <> c.sp OR conc.rq <> conc.sp OR API_Concentration <> lastAPI_Concentration THEN
+//Check of concentration or flow requests are different or filling and pumps OFF
+IF c.rq <> c.sp OR conc.rq <> conc.sp OR API_Concentration <> lastAPI_Concentration OR (filling AND (NOT PumpA.bRun AND NOT PumpB.bRun)) THEN
 	a.rq := c.rq * conc.rq/MAX(0.0001,API_Concentration);
 	b.rq := c.rq - a.rq;
 	
@@ -76,7 +76,7 @@ END_IF
 
 //set flow control setpoint and pump on/off command for API and buffer (both have to be on or both off)
 //drive pumps and speed setpoints
-IF mode = 1 AND lastMode <> 1 THEN
+IF mode = 1 AND (lastMode <> 1 OR ((PumpA.bLocal = TRUE OR PumpB.bLocal=TRUE) AND filling)) THEN
 	PumpA.nLocal_RQ := 0;
 	PumpB.nLocal_RQ := 0;
 END_IF

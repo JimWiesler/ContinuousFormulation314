@@ -101,6 +101,36 @@
 							<Type GUID="{F79679B3-DF1B-42AB-A2C2-3664F1E7B036}" Namespace="Tc2_SerialCom">EL6inData22B</Type>
 						</Var>
 						<Var>
+							<Name>MAIN.AC9999C.lsh</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.AC9999C.lsl</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTA.raw</Name>
+							<Comment>
+								<![CDATA[ IO variables: status and value]]>
+							</Comment>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTA.status</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTB.raw</Name>
+							<Comment>
+								<![CDATA[ IO variables: status and value]]>
+							</Comment>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTB.status</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
 							<Name>MAIN.FT9999A.raw</Name>
 							<Comment>
 								<![CDATA[ IO variables: status and value]]>
@@ -268,19 +298,19 @@
 							<Type GUID="{0C24F7DA-7F49-4846-B2E5-0C350F4BD3FD}" Namespace="Tc2_SerialCom">EL6outData22B</Type>
 						</Var>
 						<Var>
-							<Name>MTSerial.stOut_Port</Name>
-							<Comment>
-								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
-							</Comment>
-							<Type GUID="{0C24F7DA-7F49-4846-B2E5-0C350F4BD3FD}" Namespace="Tc2_SerialCom">EL6outData22B</Type>
-						</Var>
-						<Var>
 							<Name>MAIN.FV9999C.passiveSV</Name>
 							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>MAIN.FV9999C.activeSV</Name>
 							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MTSerial.stOut_Port</Name>
+							<Comment>
+								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
+							</Comment>
+							<Type GUID="{0C24F7DA-7F49-4846-B2E5-0C350F4BD3FD}" Namespace="Tc2_SerialCom">EL6outData22B</Type>
 						</Var>
 					</Vars>
 				</Instance>
@@ -4421,6 +4451,10 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[7]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 7"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[8]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 8"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[9]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 9"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1004)">
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsh" VarB="Channel 2^Input"/>
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsl" VarB="Channel 1^Input"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 3 (EL2004)">
 				<Link VarA="PlcTask Outputs^MAIN.FV9999C.activeSV" VarB="Channel 2^Output"/>

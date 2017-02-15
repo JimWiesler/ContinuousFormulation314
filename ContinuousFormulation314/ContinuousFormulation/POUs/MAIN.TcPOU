@@ -17,14 +17,13 @@ VAR_INPUT
 	fbFQ9999A : FQ1;
 	fbFQ9999B : FQ1;
 	fbFQ9999C : FQ1;
+	FQ9999_MasterReset : BOOL; //Master reset - resets all totalizers
+	AQ9999C : LREAL; // implied concentration based on FQA and FQB
 	
 	phase : UINT := 0;
 	//Flow and Concentration Control
-	FC9999A1 : FC1;
-	FC9999A2 : FC1b;
-	FC9999B1 : FC1;
-	FC9999B2 : FC1b;
-	FCForm : UINT := 2;
+	FC9999A : FC2_Preload;
+	FC9999B : FC2_Preload;
 	AC9999C : CC1;
 	FV9999C : FV3;
 	FVC9999C : FVC3;
@@ -172,19 +171,27 @@ fbFQ9999B(flow := FT9999B.pv, timeBaseMS := (1000.0*60.0));
 fbFT9999C(AI := FT9999C);
 fbFT9999CFilt(in := FT9999C.pv, size := FT9999CSize, out => FT9999C.pvfilt);
 fbFQ9999C(flow := FT9999C.pv, timeBaseMS := (1000.0*60.0));
+//reset all totalizers if master reset 
+IF FQ9999_MasterReset THEN
+	fbFQ9999A.resetRQ := TRUE;
+	fbFQ9999B.resetRQ := TRUE;
+	fbFQ9999C.resetRQ := TRUE;
+	FQ9999_MasterReset := FALSE;
+END_IF
+//Calculate average concentration
+IF (fbFQ9999A.total + fbFQ9999B.total) > 0.0 THEN
+	AQ9999C := (fbFQ9999A.total*AC9999C.API_Concentration)/(fbFQ9999A.total + fbFQ9999B.total);
+ELSE
+	AQ9999C := 0.0;
+END_IF
 
 //Flow and Concentration Control
-IF FCForm = 1 THEN
-	FC9999A1(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, sPID := FC9999A1CtrlData);
-	FC9999B1(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, sPID := FC9999B1CtrlData);
-ELSIF FCForm = 2 THEN
-	FC9999A2(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, ctrlData:= FC9999ACtrlData);
-	FC9999B2(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, ctrlData:= FC9999BCtrlData);
-END_IF
+FC9999A(FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS, pump := P9999A, ft := FT9999A, ctrlData:= FC9999ACtrlData);
+FC9999B(FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS, pump := P9999B, ft := FT9999B, ctrlData:= FC9999BCtrlData);
 FT9999A_FLOWCAL(fq := fbFQ9999A, pump := P9999A, FTOLS := FT9999A_OLS, pumpOLS := P9999A_OLS);
 FT9999B_FLOWCAL(fq := fbFQ9999B, pump := P9999B, FTOLS := FT9999B_OLS, pumpOLS := P9999B_OLS);
-AC9999C(FCA := FC9999A2, FTA := FT9999A, FCB:= FC9999B2, FTB := FT9999B, PumpA := P9999A, PumpB := P9999B);
-//FVC9999C(conc := AT9999C.pv, FTA := FT9999A, FTB := FT9999B, FV := FV9999C, PumpA := P9999A, PumpB := P9999B, FTC := AT9999C);
+AC9999C(FCA := FC9999A, FTA := FT9999A, FCB:= FC9999B, FTB := FT9999B, PumpA := P9999A, PumpB := P9999B);
+FVC9999C(FTA := FT9999A, FTB := FT9999B, ATC := AT9999C, cc := AC9999C, API_Concentration := AC9999C.API_Concentration, FV := FV9999C);
 
 //Pressure
 fbPT9999A(AI := PT9999A);
@@ -192,10 +199,6 @@ fbPT9999B(AI := PT9999B);
 fbPT9999C(AI := PT9999C);
 
 //Reveal
-fbAT9999RV290(AI := AT9999RV290);
-fbAT9999RV300(AI := AT9999RV300);
-fbAT9999RV310(AI := AT9999RV310);
-fbAT9999RV320(AI := AT9999RV320);
 AT9999C();
 
 //ColorWise
