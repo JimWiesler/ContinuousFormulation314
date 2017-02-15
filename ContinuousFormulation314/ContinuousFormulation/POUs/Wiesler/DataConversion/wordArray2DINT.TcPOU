@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="wordArray2DINT" Id="{32b4643b-7960-4505-9459-810173506016}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION wordArray2DINT : DINT
+VAR_INPUT
+	wordLeft : WORD;
+	wordRight : WORD; 
+END_VAR
+VAR
+	wordArray : ARRAY [1..2] OF WORD;
+	ptdint : POINTER TO DINT;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[wordArray[2] := wordLeft;
+wordArray[1] := wordRight;
+ptdint := ADR(wordArray[1]);
+wordArray2DINT := ptdint^;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

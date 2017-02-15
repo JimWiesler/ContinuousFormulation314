@@ -14,6 +14,18 @@
     <LibraryReferences>{e9c053ef-2787-4524-ad06-6e94fd2e4647}</LibraryReferences>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="DUTs\Wiesler\ControllerData.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="DUTs\Wiesler\elementStatus.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="DUTs\Wiesler\FlowCalTestResult.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="DUTs\Wiesler\Masterflex\sMasterflexPort.TcDUT">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
@@ -26,11 +38,19 @@
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
+    <Compile Include="DUTs\Wiesler\OLSResult.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="DUTs\Wiesler\sAnalogSim.TcDUT">
       <SubType>Code</SubType>
     </Compile>
     <Compile Include="DUTs\Wiesler\sEU_SCALE.TcDUT">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="DUTs\Wiesler\sAnalogConstraint.TcDUT">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="DUTs\Wiesler\sWeight.TcDUT">
       <SubType>Code</SubType>
@@ -49,6 +69,18 @@
     </Compile>
     <Compile Include="PlcTask.TcTTO">
       <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="POUs\FlowCalibration\FlowCalSequence.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\FlowCalibration\OLS.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\FlowCalibration\testOLS.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\MAIN.TcPOU">
       <SubType>Code</SubType>
@@ -75,6 +107,14 @@
     <Compile Include="POUs\Wiesler\AO1.TcPOU">
       <SubType>Code</SubType>
     </Compile>
+    <Compile Include="POUs\Wiesler\DataConversion\wordArray2Real.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\DataConversion\wordArray2DINT.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\Wiesler\Datalog\fbDatalogger_100ms.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
@@ -95,6 +135,10 @@
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
+    <Compile Include="POUs\Wiesler\Datalog\fShiftArray.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
     <Compile Include="POUs\Wiesler\fbDatalogger.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
@@ -104,6 +148,34 @@
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Wiesler\fbMovingAverage.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\CC1.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\FC2_Preload.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\FlowSequence_CC1Test.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\FVC3.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\StartStopSequence_CC1Test.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\FV3.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\FlowConcentrationControl\testFC.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
@@ -123,15 +195,15 @@
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
-    <Compile Include="POUs\Wiesler\Masterflex\MasterflexFlow2Speed.TcPOU">
-      <SubType>Code</SubType>
-      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
-    </Compile>
-    <Compile Include="POUs\Wiesler\Masterflex\MasterflexSpeed2Flow.TcPOU">
+    <Compile Include="POUs\Wiesler\ModbusTCPReveal.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
     <Compile Include="POUs\Wiesler\MT_SICS_TO_Weight.TcPOU">
+      <SubType>Code</SubType>
+      <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
+    </Compile>
+    <Compile Include="POUs\Wiesler\randn.TcPOU">
       <SubType>Code</SubType>
       <ObjectProtection>00000000-0000-0000-0000-000000000000</ObjectProtection>
     </Compile>
@@ -155,9 +227,12 @@
     <Folder Include="DUTs\Wiesler" />
     <Folder Include="DUTs\Wiesler\Masterflex" />
     <Folder Include="GVLs" />
+    <Folder Include="POUs\FlowCalibration" />
     <Folder Include="POUs\Wiesler" />
+    <Folder Include="POUs\Wiesler\FlowConcentrationControl" />
     <Folder Include="POUs\Wiesler\Masterflex" />
     <Folder Include="POUs\Wiesler\Datalog" />
+    <Folder Include="POUs\Wiesler\DataConversion" />
     <Folder Include="VISUs" />
     <Folder Include="POUs" />
   </ItemGroup>
@@ -179,6 +254,10 @@
       <Namespace>VisuNativeControl</Namespace>
       <SystemLibrary>True</SystemLibrary>
       <ResolverGuid>2717eb6a-dd07-4c66-8d8d-cacebd7b18ae</ResolverGuid>
+    </PlaceholderReference>
+    <PlaceholderReference Include="Tc2_ModbusSrv">
+      <DefaultResolution>Tc2_ModbusSrv, * (Beckhoff Automation GmbH)</DefaultResolution>
+      <Namespace>Tc2_ModbusSrv</Namespace>
     </PlaceholderReference>
     <PlaceholderReference Include="Tc2_SerialCom">
       <DefaultResolution>Tc2_SerialCom, * (Beckhoff Automation GmbH)</DefaultResolution>
@@ -221,8 +300,8 @@
   <ProjectExtensions>
     <PlcProjectOptions>
       <XmlArchive>
-  <Data>
-    <o xml:space="preserve" t="OptionKey">
+        <Data>
+          <o xml:space="preserve" t="OptionKey">
       <v n="Name">"&lt;ProjectRoot&gt;"</v>
       <d n="SubKeys" t="Hashtable" ckt="String" cvt="OptionKey">
         <v>{FE9F63D4-9E34-43ce-9322-D46747A00F33}</v>
@@ -389,23 +468,23 @@
       </d>
       <d n="Values" t="Hashtable" />
     </o>
-  </Data>
-  <TypeList>
-    <Type n="ArrayList">System.Collections.ArrayList</Type>
-    <Type n="Boolean">System.Boolean</Type>
-    <Type n="Group">{daecd4be-1e2b-4335-a125-4a1ac83ea49f}</Type>
-    <Type n="GroupList">{bf4dffda-f055-446d-9d7a-5f126720896b}</Type>
-    <Type n="Guid">System.Guid</Type>
-    <Type n="Guid[]">System.Guid[]</Type>
-    <Type n="Hashtable">System.Collections.Hashtable</Type>
-    <Type n="Int32">System.Int32</Type>
-    <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
-    <Type n="String">System.String</Type>
-    <Type n="User">{cd83029e-13b0-491e-9e4b-921adda0d86b}</Type>
-    <Type n="UserAuthentication">{3635a671-97f5-41bb-9e29-0ebb9795975c}</Type>
-    <Type n="UserList">{9fe6b547-6bc8-4f11-b589-b517860c5891}</Type>
-  </TypeList>
-</XmlArchive>
+        </Data>
+        <TypeList>
+          <Type n="ArrayList">System.Collections.ArrayList</Type>
+          <Type n="Boolean">System.Boolean</Type>
+          <Type n="Group">{daecd4be-1e2b-4335-a125-4a1ac83ea49f}</Type>
+          <Type n="GroupList">{bf4dffda-f055-446d-9d7a-5f126720896b}</Type>
+          <Type n="Guid">System.Guid</Type>
+          <Type n="Guid[]">System.Guid[]</Type>
+          <Type n="Hashtable">System.Collections.Hashtable</Type>
+          <Type n="Int32">System.Int32</Type>
+          <Type n="OptionKey">{54dd0eac-a6d8-46f2-8c27-2f43c7e49861}</Type>
+          <Type n="String">System.String</Type>
+          <Type n="User">{cd83029e-13b0-491e-9e4b-921adda0d86b}</Type>
+          <Type n="UserAuthentication">{3635a671-97f5-41bb-9e29-0ebb9795975c}</Type>
+          <Type n="UserList">{9fe6b547-6bc8-4f11-b589-b517860c5891}</Type>
+        </TypeList>
+      </XmlArchive>
     </PlcProjectOptions>
   </ProjectExtensions>
 </Project>

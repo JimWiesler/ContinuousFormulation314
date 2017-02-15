@@ -69,7 +69,9 @@
 	<Project ProjectGUID="{11BCAD7E-82A9-4AF7-9239-6F5B3CC64186}" TargetNetId="5.31.160.194.1.1">
 		<System>
 			<Licenses>
-				<Target BkhfOrder="VE2250525" CustomOrder=" Eli Lilly so 490028"/>
+				<Target BkhfOrder="VE2250525" CustomOrder="Eli Lilly so 490028">
+					<ManualSelect>{6952449D-F68C-49A2-ADE4-8639D85B33A4}</ManualSelect>
+				</Target>
 			</Licenses>
 			<Tasks>
 				<Task Id="3" Priority="20" CycleTime="10000" AmsPort="350">
@@ -97,6 +99,36 @@
 								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
 							</Comment>
 							<Type GUID="{F79679B3-DF1B-42AB-A2C2-3664F1E7B036}" Namespace="Tc2_SerialCom">EL6inData22B</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.AC9999C.lsh</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.AC9999C.lsl</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTA.raw</Name>
+							<Comment>
+								<![CDATA[ IO variables: status and value]]>
+							</Comment>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTA.status</Name>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTB.raw</Name>
+							<Comment>
+								<![CDATA[ IO variables: status and value]]>
+							</Comment>
+							<Type>INT</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FVC9999C.FTB.status</Name>
+							<Type>INT</Type>
 						</Var>
 						<Var>
 							<Name>MAIN.FT9999A.raw</Name>
@@ -162,50 +194,6 @@
 						</Var>
 						<Var>
 							<Name>MAIN.PT9999C.status</Name>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OPCONC.raw</Name>
-							<Comment>
-								<![CDATA[ IO variables: status and value]]>
-							</Comment>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OPCONC.status</Name>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OP300.raw</Name>
-							<Comment>
-								<![CDATA[ IO variables: status and value]]>
-							</Comment>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OP300.status</Name>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OP313.raw</Name>
-							<Comment>
-								<![CDATA[ IO variables: status and value]]>
-							</Comment>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OP313.status</Name>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OPDIFF.raw</Name>
-							<Comment>
-								<![CDATA[ IO variables: status and value]]>
-							</Comment>
-							<Type>INT</Type>
-						</Var>
-						<Var>
-							<Name>MAIN.AT9999OPDIFF.status</Name>
 							<Type>INT</Type>
 						</Var>
 						<Var>
@@ -286,10 +274,6 @@
 							<Type>INT</Type>
 						</Var>
 						<Var>
-							<Name>MAIN.fbFT9999Cfq.rawCount</Name>
-							<Type>UDINT</Type>
-						</Var>
-						<Var>
 							<Name>MTSerial.stIn_Port</Name>
 							<Comment>
 								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
@@ -312,6 +296,14 @@
 								<![CDATA[ linked to the EL6002 in the TwinCAT System Manager]]>
 							</Comment>
 							<Type GUID="{0C24F7DA-7F49-4846-B2E5-0C350F4BD3FD}" Namespace="Tc2_SerialCom">EL6outData22B</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FV9999C.passiveSV</Name>
+							<Type>BOOL</Type>
+						</Var>
+						<Var>
+							<Name>MAIN.FV9999C.activeSV</Name>
+							<Type>BOOL</Type>
 						</Var>
 						<Var>
 							<Name>MTSerial.stOut_Port</Name>
@@ -4460,24 +4452,21 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[8]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 8"/>
 				<Link VarA="PlcTask Outputs^MTSerial.stOut_Port^D[9]" VarB="COM RxPDO-Map Outputs Channel 1^Data Out 9"/>
 			</OwnerB>
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 13 (EL1502)">
-				<Link VarA="PlcTask Inputs^MAIN.fbFT9999Cfq.rawCount" VarB="CNT Inputs^Counter value"/>
+			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 2 (EL1004)">
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsh" VarB="Channel 2^Input"/>
+				<Link VarA="PlcTask Inputs^MAIN.AC9999C.lsl" VarB="Channel 1^Input"/>
+			</OwnerB>
+			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 3 (EL2004)">
+				<Link VarA="PlcTask Outputs^MAIN.FV9999C.activeSV" VarB="Channel 2^Output"/>
+				<Link VarA="PlcTask Outputs^MAIN.FV9999C.passiveSV" VarB="Channel 1^Output"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 4 (EL3124) Flow">
 				<Link VarA="PlcTask Inputs^MAIN.FT9999A.raw" VarB="AI Standard Channel 2^Value"/>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999A.status" VarB="AI Standard Channel 2^Status"/>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999B.raw" VarB="AI Standard Channel 1^Value"/>
 				<Link VarA="PlcTask Inputs^MAIN.FT9999B.status" VarB="AI Standard Channel 1^Status"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 5 (EL3124) Optek">
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OP300.raw" VarB="AI Standard Channel 2^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OP300.status" VarB="AI Standard Channel 2^Status"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OP313.raw" VarB="AI Standard Channel 3^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OP313.status" VarB="AI Standard Channel 3^Status"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OPCONC.raw" VarB="AI Standard Channel 1^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OPCONC.status" VarB="AI Standard Channel 1^Status"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OPDIFF.raw" VarB="AI Standard Channel 4^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.AT9999OPDIFF.status" VarB="AI Standard Channel 4^Status"/>
+				<Link VarA="PlcTask Inputs^MAIN.FT9999C.raw" VarB="AI Standard Channel 3^Value"/>
+				<Link VarA="PlcTask Inputs^MAIN.FT9999C.status" VarB="AI Standard Channel 3^Status"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 6 (EL3124) Reveal">
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV290.raw" VarB="AI Standard Channel 1^Value"/>
@@ -4488,10 +4477,6 @@ Bit1: Value smaller than Limit2]]>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV310.status" VarB="AI Standard Channel 3^Status"/>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV320.raw" VarB="AI Standard Channel 4^Value"/>
 				<Link VarA="PlcTask Inputs^MAIN.AT9999RV320.status" VarB="AI Standard Channel 4^Status"/>
-			</OwnerB>
-			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 7 (EL3124)">
-				<Link VarA="PlcTask Inputs^MAIN.FT9999C.raw" VarB="AI Standard Channel 1^Value"/>
-				<Link VarA="PlcTask Inputs^MAIN.FT9999C.status" VarB="AI Standard Channel 1^Status"/>
 			</OwnerB>
 			<OwnerB Name="TIID^Device 1 (EtherCAT)^Term 1 (EK1200)^Term 8 (EL3104)">
 				<Link VarA="PlcTask Inputs^MAIN.AT9999CWx.raw" VarB="AI Standard Channel 4^Value"/>

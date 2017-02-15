@@ -1,0 +1,22 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="wordArray2Real" Id="{a7f2ffca-c3dd-40e1-b9ad-447924b2e290}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION wordArray2Real : REAL
+VAR_INPUT
+	wordLeft : WORD;
+	wordRight : WORD; 
+END_VAR
+VAR
+	wordArray : ARRAY [1..2] OF WORD;
+	ptReal : POINTER TO REAL;
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[wordArray[2] := wordLeft;
+wordArray[1] := wordRight;
+ptReal := ADR(wordArray[1]);
+wordArray2Real := ptReal^;
+]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

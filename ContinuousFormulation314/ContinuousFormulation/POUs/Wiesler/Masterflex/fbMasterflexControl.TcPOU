@@ -60,7 +60,7 @@ IF bReqTX THEN
 	8: //Start or Stop Pump
 		sPort.sRxSuffix := '$06'; // expected response <ACK>
 		IF sPort.nRun_RQ = 1 THEN
-			sPort.sSendString := '$02P01G0$0D'; // <STX>P01G<CR>
+			sPort.sSendString := '$02P01G0$0D'; // <STX>P01G0<CR>
 		ELSE 
 			sPort.sSendString := '$02P01H$0D'; // <STX>P01H<CR>
 		END_IF
@@ -143,7 +143,7 @@ IF (len(sPort.sSendString) = 0) AND
 				END_IF				
 				
 				//set next state
-				IF sPort.fSpeedSP_RQ >= 0.0 THEN
+				IF sPort.fSpeedSP_RQ >= 0.0  OR (sPort.nRun_RQ = 1) THEN //JRW issue #1 set speed every time pump is started to avoid pump running in wrong direction or wrong speed.
 					sPort.nState := 7;
 				ELSIF sPort.nRun_RQ <> -1 THEN
 					sPort.nState := 8;

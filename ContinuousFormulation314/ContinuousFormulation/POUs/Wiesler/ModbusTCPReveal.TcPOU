@@ -1,0 +1,242 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="ModbusTCPReveal" Id="{eb92a042-d9e0-42c4-b278-20696ceefdc7}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION_BLOCK ModbusTCPReveal
+VAR_INPUT
+	IPAddress : STRING(15) := '192.168.2.252'; // IP address of modbus server/field device
+	modbusTCPPort : UINT := MODBUS_TCP_PORT; // ModbusTCP port, generally port 
+    statusReadMS : UINT := 5000; // Number of milliseconds between status reads
+   
+END_VAR
+VAR_OUTPUT
+	fbRead : FB_MBReadRegs;
+    //settings for reading register blocks, status and results
+	simulateEnable : BOOL := FALSE; //enable simulation - randomly calculates PV, no modbus scanning
+    statusRead : BOOL := FALSE; //true when reading the status block of data, registers 1-14
+	numRegistersStatus : WORD := 14; //number of Modbus 16-bit registers in status read
+	startAddressStatus : WORD := 0; //Starting address for status read - 0 corresponds to register 1
+	returnDataStatus : ARRAY [1..14] OF WORD; //raw 16-bit results from status read
+	numRegistersResults : WORD := 28; //number of Modbus 16-bit registers in results read
+	startAddressRes : WORD := 100; //Starting address for results read - 100 corresponds to register 101
+	returnDataResults : ARRAY [1..28] OF WORD; //raw 16-bit results from results read
+
+    //converted values from register reads
+	heartbeat : INT; //register 1
+	revisionNumber : INT; //register 2
+    serialNumber : DINT; //register 3-4
+	status : INT; //register 5
+	lampState : BOOL; //register 6
+	samplingState : BOOL; //register 7
+    systemHours : REAL; //register 8-9
+    lampHours : REAL; //register 10-11
+	temperature : REAL; //register 12-13
+    activeMethod : INT; //register 14
+	readingID : DINT := 0; //register 101-102 NOTE: not currently implemented
+    numResults : INT; //register 103
+	results : ARRAY [1..12] OF REAL; //registers 104-127
+    resultAlarms : INT; //register 128
+	pv : LREAL := -1.0;
+	samplesCount : DINT := -1;
+END_VAR
+VAR
+	i : UINT;
+	j : UINT;
+	is : UINT;
+	ie : UINT;
+	busyLast : BOOL := FALSE;
+	busyCounter : UINT := 0;
+	pollCount : ULINT := 0;
+	lastPollTime : UINT := 0;
+	sampleCountTimeMS : ULINT := 1000;
+	lastReadingID : DINT := 0;
+	newReading : BOOL := FALSE;
+	lastReturnDataResults : ARRAY [1..24] OF WORD;
+    nextStatusReadTime : ULINT := 0;
+
+	simulate_execCounter  : DWORD := 0;
+	simulate_execTime : TIME := T#20MS;  //simulate a new reading this amount of time
+	simulate_x1 : DRAND;
+	simulate_x2 : DRAND;
+	simulate_mean : LREAL := 3.25;
+	simulate_sigma : LREAL := 0.1;
+	simulate_seed1 : INT;
+	simulate_seed2 : INT;
+END_VAR
+
+
+// - Register(s)     Command             Type   Format
+// - -------------   ------------------- -----  ------------------------------------------------------------------------
+// -    1            Heartbeat            OUT   16-bit integer: continually increasing value every second
+// -    2            Revision Number      OUT   16-bit integer: Identifies the format of all following data. Equals “1” for this version.
+// -    3 -    4     Serial Number        OUT   32-bit integer: Serial number of the Reveal
+// -    5            Status               OUT   16-bit integer: okay=0, anything else indicates an error condition
+// -    6            Lamp State           OUT   16-bit integer: 0=off, 1=on
+// -    7            Sampling State       OUT   16-bit integer: 0=off, 1=on
+// -    8 -    9     System Hours         OUT   32-bit floating point: Number of hours the system has been on
+// -   10 -   11     Lamp Hours           OUT   32-bit floating point: Number of hours the lamp has been on
+// -   12 -   13     Air Temperature      OUT   32-bit floating point: Temperature inside Reveal chassis, deg C
+// -   14            Active Method Number OUT   16-bit integer: TBD
+// -   15 -  100     Not Used
+// -  101 -  102     Reading ID           OUT   32-bit integer: reading identifier
+// -  103            Num Results          OUT   16-bit integer: Number of results in current model.
+// -  104 -  105     Result01             OUT   32-bit floating point
+// -  106 -  107     Result02             OUT   32-bit floating point
+// -  108 -  109     Result03             OUT   32-bit floating point
+// -  110 -  111     Result04             OUT   32-bit floating point
+// -  112 -  113     Result05             OUT   32-bit floating point
+// -  114 -  115     Result06             OUT   32-bit floating point
+// -  116 -  117     Result07             OUT   32-bit floating point
+// -  118 -  119     Result08             OUT   32-bit floating point
+// -  120 -  121     Result09             OUT   32-bit floating point
+// -  122 -  123     Result10             OUT   32-bit floating point
+// -  124 -  125     Result11             OUT   32-bit floating point
+// -  126 -  127     Result12             OUT   32-bit floating point
+// -  128            Result Alarms        OUT   16-bit integer: TBD
+//
+// Notes
+// ---------------------------------------------------------------------------------------------------------------------
+//  Modbus register and coil reference numbers start with "1", which corresponds to data at offset "0".
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[// Program uses a single FB_MBReadRegs function block to read either the status registers 1-14 or the
+// results registers 101-128.  The status read occurs as base don input statusReadMS, defaulted to 5 seconds.
+// Results reads are read repeatedly except when status reads interrupt.
+// FB_MB_ReadRegs inputs (from Twincat manual):
+//       sIPAddr: Is a string containing the IP address of the target device.
+//       nTCPPort: Port number of the target device.
+//       nUnitID:   Identification number of a serial sub-network device. If a device is addressed directly via TCP/IP, this 
+//                   value must be 16#FF.
+//       nQuantity: Number of output registers (data words) to be read. The value of nQuantity must be > 0.
+//       nMBAddr: Start address of the output registers to be read (word offset).
+//       cbLength: Contains the max. byte size of the destination buffer. The minimum buffer byte size must be: nQuantity * 2.
+//       pDestAddr: Contains the address of the destination buffer into which the data are to be read. The buffer can be
+//                  a single variable, an array or a structure, whose address can be found with the ADR operator.
+//       bExecute: The function block is activated by a rising edge at this input.
+//       tTimeout: States the length of the timeout that may not be exceeded by execution of the ADS command.
+
+
+
+IF NOT simulateEnable THEN
+    IF unixTime > nextStatusReadTime THEN
+      statusRead := TRUE;
+    END_IF
+	IF statusRead THEN //set modbus read request to get status information
+		fbRead(sIPAddr := IPAddress,
+				nQuantity := numRegistersStatus,
+				nMBAddr := startAddressStatus,
+				cbLength := SIZEOF(returnDataStatus),
+				pDestAddr := ADR(returnDataStatus),
+                tTimeout := T#500MS
+		);
+	ELSE  //otherwise get results data
+		fbRead(sIPAddr := IPAddress,
+				nQuantity := numRegistersResults,
+				nMBAddr := startAddressRes,
+				cbLength := SIZEOF(returnDataResults),
+				pDestAddr := ADR(returnDataResults),
+                tTimeout := T#500MS
+		);
+	END_IF
+    IF fbRead.bBusy THEN //modbus read is in progress, capture read time and reset read request
+        busyCounter := busyCounter + 1;
+        fbRead.bExecute := FALSE;
+    END_IF
+
+	//If modbus request finished since last scan process the data
+	IF NOT fbRead.bBusy AND busyLast THEN
+		//Capture poll statistics
+		pollCount := pollCount + 1;
+		lastPollTime := busyCounter;
+		busyCounter := 0;
+
+        //Set output variables based on return registers
+      	IF statusRead THEN // Set status values if return data are the status registers
+         	IF NOT fbRead.bError THEN
+				heartbeat := WORD_TO_INT(returnDataStatus[1]);
+				revisionNumber := WORD_TO_INT(returnDataStatus[2]);
+				serialNumber := wordArray2DINT(returnDataStatus[3], returnDataStatus[4]);
+				status := WORD_TO_INT(returnDataStatus[5]);
+				lampState := WORD_TO_BOOL(returnDataStatus[6]);
+				samplingState := WORD_TO_BOOL(returnDataStatus[7]);
+				systemHours := wordArray2Real(returnDataStatus[8], returnDataStatus[9]);
+				lampHours := wordArray2Real(returnDataStatus[10], returnDataStatus[11]);
+				temperature := wordArray2Real(returnDataStatus[12], returnDataStatus[13]);
+				activeMethod := WORD_TO_INT(returnDataStatus[5]);
+         	ELSE
+				heartbeat := -100;
+				status := -100;
+         	END_IF
+			//set time for next status read
+			nextStatusReadTime := unixTime + statusReadMS;
+			statusRead := false;
+      	ELSE // most recent read was for results
+         	//REGISTERS 101-102
+			//readingID := wordArray2DINT(returnDataResults[1], returnDataResults[2]);
+			//NOTE: the following is a kludge to overcome Reveal bug where readingID is never updated over Modbus
+			newReading := FALSE;
+			FOR j := 1 TO 24 DO
+				IF returnDataResults[j+3] <> lastReturnDataResults[j] THEN
+					newReading := TRUE;  //new reading is indicated by any of the return data being different from the last scan
+				END_IF
+				lastReturnDataResults[j] := returnDataResults[j+3];
+			END_FOR
+			//increment readingID if new value was read
+			IF newReading THEN
+				readingID := readingID + 1;
+			END_IF
+         	//REGISTER 103
+         	numResults := WORD_TO_INT(returnDataResults[3]);
+         	//REGISTERS 104-127
+			FOR i := 1 TO 12 DO
+				is := 2*i+2;
+				ie := 2*i+3;
+				IF NOT fbRead.bError AND samplingState AND status = 0 THEN
+				   results[i] := wordArray2Real(returnDataResults[is], returnDataResults[ie]);
+				ELSE
+				   results[i] := -100.0;
+				END_IF
+			END_FOR
+			//REGISTER 128
+			resultAlarms := WORD_TO_INT(returnDataResults[28]); 
+         
+         	//Set PV based on results
+			IF results[7] <= 0.25 THEN
+				pv := results[7]; //low concentration model
+			ELSE
+				pv := results[6]; //high concentration model
+			END_IF
+      	END_IF
+	END_IF
+
+
+//Ignore the last stuff and simulate a reading if simulateEnable is active
+ELSE //simulate is enabled
+	IF simulate_execCounter >= TIME_TO_DWORD(simulate_execTime) THEN  //update pv
+		simulate_execCounter := 0;
+		readingID := readingID + 1;
+		//calculate semi-random pv
+		simulate_seed1 := ULINT_TO_INT(unixTime);
+		simulate_seed2 := simulate_seed1 + 1;
+		simulate_x1(Seed := simulate_seed1);
+		simulate_x2(Seed := simulate_seed2);
+		pv := randn(x1 := simulate_x1.Num, x2 := simulate_x2.Num, mean := simulate_mean, sigma := simulate_sigma);
+	END_IF
+	simulate_execCounter := simulate_execCounter + 1;
+END_IF
+
+
+//Count the spectrometer reads
+IF (unixTime MOD sampleCountTimeMS) = 0 THEN
+	samplesCount := readingID - lastReadingID;
+	lastReadingID := readingID;
+END_IF
+
+//intitiate the next scan
+IF NOT fbRead.bBusy AND NOT busyLast AND NOT simulateEnable THEN
+	fbRead.bExecute := TRUE;
+END_IF
+
+busyLast := fbRead.bBusy;]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

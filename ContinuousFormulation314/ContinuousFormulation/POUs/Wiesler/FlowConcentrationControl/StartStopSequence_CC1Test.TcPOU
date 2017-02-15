@@ -1,24 +1,16 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
-  <POU Name="FlowCheck" Id="{5af3dc8a-7e5a-4711-bca5-17d71c2a26ea}" SpecialFunc="None">
-    <Declaration><![CDATA[PROGRAM FlowCheck
+  <POU Name="StartStopSequence_CC1Test" Id="{14f49013-d3dd-4205-a8dc-c80c72f3680d}" SpecialFunc="None">
+    <Declaration><![CDATA[PROGRAM StartStopSequence_CC1Test
 VAR_INPUT
 	start : BOOL := FALSE;
-	setSpeedDuration : TIME := T#15S;
-	runTestDuration : TIME := T#15S;
-	runTestWeight : lreal := 10.0; // run for 100 grams
+	setSpeedDuration : TIME := T#0S;
 	autoAdvance : BOOL := TRUE;
 END_VAR
 VAR_OUTPUT
 	startTimes : ARRAY[1..50] OF ULINT;
 	endTimes : ARRAY[1..50] OF ULINT;
-	FQA : ARRAY[1..50] OF LREAL;
-	FQB : ARRAY[1..50] OF LREAL;
-	FQC : ARRAY[1..50] OF LREAL;
-	weight : ARRAY[1..50] OF LREAL;
-	FTA_mean : ARRAY[1..50] OF LREAL;
-	FTB_mean : ARRAY[1..50] OF LREAL;
-	FTC_mean : ARRAY[1..50] OF LREAL;
+
 	P9999Atubing : ARRAY[1..50] OF INT;
 	P9999Btubing : ARRAY[1..50] OF INT;
 END_VAR
@@ -27,26 +19,27 @@ VAR
 	n : UINT := 25;
 	t : LREAL := 0.0;
 	tol : LREAL := 5.0;
-	//spA : ARRAY [1..50] OF LREAL := [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
-    //                                125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0,
-    //                                350.0, 400.0, 450.0, 500.0, 550.0, 600.0,
+	spTotal : ARRAY [1..50] OF LREAL := [100.0,100.0,100.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, 0.0,
+									0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
+	//spTotal : ARRAY [1..50] OF LREAL := [100.0, 150.0, 200.0, 300.0, 150.0, 100.0, 80.0, 80.0, 90.0, 100.0, 
+    //                                110.0, 120.0, 130.0, 140.0, 150.0, 0.0, 0.0, 0.0,
+    //                                0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 	//								0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
-	spA : ARRAY [1..50] OF LREAL := [10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
-                                    110.0, 120.0, 130.0, 140.0, 150.0, 0.0, 0.0, 0.0,
+	spConc : ARRAY [1..50] OF LREAL := [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 
+                                    1.0, 1.0, 1.0, 1.0, 1.0, 0.0, 0.0, 0.0,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
 									0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0];
-	spB : ARRAY [1..50] OF LREAL := [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
-									0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0
-	];
-	//								0.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
-    //                                125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0,
-    //                                350.0, 400.0, 450.0, 500.0, 550.0, 600.0];
-	//spA : ARRAY [1..50] OF LREAL := [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,
-	//								0.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0, 
-    //                                125.0, 150.0, 175.0, 200.0, 225.0, 250.0, 275.0, 300.0,
-    //                                350.0, 400.0, 450.0, 500.0, 550.0, 600.0];
-	//sp : ARRAY [1..50] OF LREAL := [51.0, 58.0, 64.0, 79.0, 97.0, 112.0, 128.0, 151.0, 210.0, 280.0, 335.0, 410.0, 480.0, 600.0];
-	//sp : ARRAY [1..50] OF LREAL := [335.0, 410.0, 480.0, 600.0];
+	stopTime : ARRAY [1..50] OF TIME := [T#0.5M, T#0.5M, T#0.5M, T#10.0M, T#15.0M, T#30.0M, T#60.0M, T#120.0M, T#1.0M, T#1.0M, 
+                                    T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#0.0M, T#0.0M, T#0.0M,
+                                    T#0.0M, T#0.0M, T#0.0M, T#0.0M, T#0.0M, T#0.0M,
+									T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,
+									T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M];
+	runTime : ARRAY [1..50] OF TIME := [T#0.1M, T#0.1M, T#0.1M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, 
+                                    T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#1.0M, T#0.0M, T#0.0M, T#0.0M,
+                                    T#0.0M, T#0.0M, T#0.0M, T#0.0M, T#0.0M, T#0.0M,
+									T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,
+									T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M,T#0.0M];
+	
 	setSpeed : SFCStepType;
 	runTest : SFCStepType;
 	recordTest : SFCStepType;
@@ -308,12 +301,12 @@ END_VAR
                       <v n="IdParent">5L</v>
                     </o>
                     <o t="SFCTransition">
-                      <v n="VariableName">"setLocal__to__setSpeed"</v>
+                      <v n="VariableName">"setLocal__to__setTotalFlow"</v>
                       <l2 n="Attributes" cet="SFCAttribute">
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"(not MAIN.P9999A.bLocal) and (not MAIN.P9999B.bLocal)"</v>
+                            <v n="Value">"(not MAIN.P9999A.bLocal) and (not MAIN.P9999B.bLocal) AND (MAIN.AC9999C.mode = 1)"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">153L</v>
@@ -360,7 +353,7 @@ END_VAR
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"setSpeed"</v>
+                            <v n="Value">"setTotalFlow"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">45L</v>
@@ -454,7 +447,7 @@ END_VAR
                       <v n="IdParent">5L</v>
                     </o>
                     <o t="SFCTransition">
-                      <v n="VariableName">"setSpeed__to__resetTotals"</v>
+                      <v n="VariableName">"setTotalFlow__to__runTest"</v>
                       <l2 n="Attributes" cet="SFCAttribute">
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
@@ -496,152 +489,6 @@ END_VAR
                         </o>
                       </l2>
                       <v n="Id">71L</v>
-                      <v n="IdParent">5L</v>
-                    </o>
-                    <o t="SFCStep">
-                      <o n="ElementList" t="SFCElementList">
-                        <l2 n="InnerList" />
-                      </o>
-                      <l2 n="Attributes" cet="SFCAttribute">
-                        <o>
-                          <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">"resetTotals"</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">171L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{7d894980-aeea-405c-a0f6-e2b26429c58f}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">172L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{01580b27-6378-448b-8ecb-0e4b795b58d6}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">173L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{bc882c11-1e91-4dd8-a6b8-2075724ed18b}</v>
-                          <o n="Value" t="EnumValue">
-                            <v n="TemplateGuid">{79a4fdd5-c859-4de4-aa8d-c03372c880c2}</v>
-                            <n n="BaseType" />
-                            <v n="Value">"0"</v>
-                            <v n="DefaultValue">"0"</v>
-                          </o>
-                          <v n="Id">174L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{6844a48e-46c2-4cc8-a185-a478f3b99cc0}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">175L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{cacf1a68-236e-47c2-b7b1-1cf9199718cb}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">176L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{b693554c-1b01-4a8d-afde-9e3a46f7465d}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">177L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{700a583f-b4d4-43e4-8c14-629c7cd3bec8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">178L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{a6b08bd8-b696-47e3-9cbf-7408b61c9ff8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">"resetTotals_entry"</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">179L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{a2621e18-7de3-4ea6-ae6d-89e9e0b7befd}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">180L</v>
-                          <v n="IdParent">170L</v>
-                        </o>
-                      </l2>
-                      <v n="Id">170L</v>
-                      <v n="IdParent">5L</v>
-                    </o>
-                    <o t="SFCTransition">
-                      <v n="VariableName">"resetTotals__to__runTest"</v>
-                      <l2 n="Attributes" cet="SFCAttribute">
-                        <o>
-                          <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">"MAIN.MTWeight.pv &lt;= tol and MAIN.fbFQ9999A.total &lt; tol AND MAIN.fbFQ9999B.total &lt; tol"</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">182L</v>
-                          <v n="IdParent">181L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{7d894980-aeea-405c-a0f6-e2b26429c58f}</v>
-                          <o n="Value" t="StringValue">
-                            <v n="Value">""</v>
-                            <v n="DefaultValue">""</v>
-                          </o>
-                          <v n="Id">183L</v>
-                          <v n="IdParent">181L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{01580b27-6378-448b-8ecb-0e4b795b58d6}</v>
-                          <o n="Value" t="BoolValue">
-                            <v n="Value">"FALSE"</v>
-                            <v n="DefaultValue">"FALSE"</v>
-                          </o>
-                          <v n="Id">184L</v>
-                          <v n="IdParent">181L</v>
-                        </o>
-                        <o>
-                          <v n="AttributeId">{bc882c11-1e91-4dd8-a6b8-2075724ed18b}</v>
-                          <o n="Value" t="EnumValue">
-                            <v n="TemplateGuid">{79a4fdd5-c859-4de4-aa8d-c03372c880c2}</v>
-                            <n n="BaseType" />
-                            <v n="Value">"0"</v>
-                            <v n="DefaultValue">"0"</v>
-                          </o>
-                          <v n="Id">185L</v>
-                          <v n="IdParent">181L</v>
-                        </o>
-                      </l2>
-                      <v n="Id">181L</v>
                       <v n="IdParent">5L</v>
                     </o>
                     <o t="SFCStep">
@@ -751,7 +598,7 @@ END_VAR
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"runTest.t &gt;= runTestDuration and MAIN.MTWeight.pv &gt;= runTestWeight"</v>
+                            <v n="Value">"runTest.t &gt;= runTime[i]"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">88L</v>
@@ -897,7 +744,7 @@ END_VAR
                         <o>
                           <v n="AttributeId">{38391c6d-6d4a-42f8-8ee7-9f45e5adafa8}</v>
                           <o n="Value" t="StringValue">
-                            <v n="Value">"recordTest.t &gt;= T#2S"</v>
+                            <v n="Value">"recordTest.t &gt;= stopTime[i]"</v>
                             <v n="DefaultValue">""</v>
                           </o>
                           <v n="Id">18L</v>
@@ -1243,19 +1090,27 @@ END_VAR
         </XmlArchive>
       </SFC>
     </Implementation>
-    <Action Name="Init_entry" Id="{2c7f0757-376b-4664-8340-64e21c1687ac}">
+    <Action Name="recordTest_entry" Id="{40fc5ea3-b802-42d8-8a80-7ede4ca07f16}">
       <Implementation>
-        <ST><![CDATA[IF i >= n THEN
-	MAIN.P9999A.nRun_RQ := 0; //stop pump
-	MAIN.P9999B.nRun_RQ := 0; //stop pump
+        <ST><![CDATA[endTimes[i] := unixTime;
+MAIN.AC9999C.c.rq := 0; // set flow to 0 to stop pumps
+t := DWORD_TO_LREAL(TIME_TO_DWORD(runTime[i]))/1000.0/60.0;
+
+IF NOT autoAdvance THEN
 	start := FALSE;
-	i := 0;
 END_IF
-MAIN.logActive := FALSE;
 ]]></ST>
       </Implementation>
     </Action>
-    <Action Name="resetTotals_entry" Id="{42e03fb6-3cc9-4d62-bfe7-006a7768173a}">
+    <Action Name="runTest_entry" Id="{4bb8c9c0-c090-4232-b342-273cde756878}">
+      <Implementation>
+        <ST><![CDATA[MAIN.MTSendString := 'SIR$0D$0A';
+startTimes[i] := unixTime;
+
+]]></ST>
+      </Implementation>
+    </Action>
+    <Action Name="resetTotals_entry" Id="{556a9648-f35c-48e8-9a41-92303e3ecb5b}">
       <Implementation>
         <ST><![CDATA[MAIN.fbFQ9999A.resetRQ := TRUE;
 MAIN.fbFQ9999B.resetRQ := TRUE;
@@ -1265,71 +1120,47 @@ MAIN.logActive := TRUE;
 ]]></ST>
       </Implementation>
     </Action>
-    <Action Name="setSpeed_entry" Id="{848cd76c-d321-45a4-b4a4-715fef5a0e03}">
-      <Implementation>
-        <ST><![CDATA[i := i + 1;
-startTimes[i] := 0;
-endTimes[i] := 0;
-FQA[i] := 0;
-FQB[i] := 0;
-FQC[i] := 0;
-weight[i] := 0;
-FTA_mean[i] := 0;
-FTB_mean[i] := 0;
-FTC_mean[i] := 0;
-IF spA[i] > 0.1 THEN
-	MAIN.P9999A.nRun_RQ := 1; //start pump
-	MAIN.P9999A.fSpeedSP_RQ := spA[i];
-ELSE
-	MAIN.P9999A.nRun_RQ := 0; //stop pump
-	MAIN.P9999A.fSpeedSP_RQ := 0.0;
-END_IF
-	
-IF spB[i] > 0.1 THEN
-	MAIN.P9999B.nRun_RQ := 1; //start pump
-	MAIN.P9999B.fSpeedSP_RQ := spB[i];
-ELSE
-	MAIN.P9999B.nRun_RQ := 0; //stop pump
-	MAIN.P9999B.fSpeedSP_RQ := 0.0;
-END_IF
-
-P9999Atubing[i] := MAIN.P9999A.nTubeSize;
-P9999Btubing[i] := MAIN.P9999B.nTubeSize;
-]]></ST>
-      </Implementation>
-    </Action>
-    <Action Name="setLocal_entry" Id="{b55c3b40-24b5-4d93-acf5-8ede72550ec4}">
+    <Action Name="setLocal_entry" Id="{80608a6b-c3dd-4fea-962b-2854f789f25d}">
       <Implementation>
         <ST><![CDATA[IF MAIN.P9999A.bLocal THEN
 	MAIN.P9999A.nLocal_RQ := 0;  //put pump in remote
 END_IF
 IF MAIN.P9999B.bLocal THEN
 	MAIN.P9999B.nLocal_RQ := 0;  //put pump in remote
+END_IF
+
+IF MAIN.AC9999C.mode <> 1 THEN 
+	MAIN.AC9999C.mode := 1; // concentration control in auto
+	MAIN.AC9999C.c.rq := 0; // set initial total flow
+	MAIN.AC9999C.conc.rq := 1.0; // set initial concentration
+	
 END_IF]]></ST>
       </Implementation>
     </Action>
-    <Action Name="recordTest_entry" Id="{bde3d7fd-3957-4ac5-8388-8d931f021eff}">
+    <Action Name="setSpeed_entry" Id="{8a12c593-cb81-4fa6-ba63-be9bfd1c77c2}">
       <Implementation>
-        <ST><![CDATA[endTimes[i] := unixTime;
-FQA[i] := MAIN.fbFQ9999A.total;
-FQB[i] := MAIN.fbFQ9999B.total;
-FQC[i] := MAIN.fbFQ9999C.total;
-weight[i] := MAIN.MTWeight.pv;
-t := DWORD_TO_LREAL(TIME_TO_DWORD(runTestDuration))/1000.0/60.0;
-FTA_mean[i] := MAIN.fbFQ9999A.total/t;
-FTB_mean[i] := MAIN.fbFQ9999B.total/t;
-FTC_mean[i] := MAIN.fbFQ9999C.total/t;
-IF NOT autoAdvance THEN
-	start := FALSE;
-END_IF
+        <ST><![CDATA[i := i + 1;
+startTimes[i] := 0;
+endTimes[i] := 0;
+
+MAIN.AC9999C.c.rq := spTotal[i];
+MAIN.AC9999C.conc.rq := spConc[i];
+
+P9999Atubing[i] := MAIN.P9999A.nTubeSize;
+P9999Btubing[i] := MAIN.P9999B.nTubeSize;
 ]]></ST>
       </Implementation>
     </Action>
-    <Action Name="runTest_entry" Id="{c81ced17-7403-423d-b9f6-ed0097e4666c}">
+    <Action Name="Init_entry" Id="{ecf34ce4-3fcf-409c-8fbb-d0faa82d51d8}">
       <Implementation>
-        <ST><![CDATA[MAIN.MTSendString := 'SIR$0D$0A';
-startTimes[i] := unixTime;
-
+        <ST><![CDATA[IF i >= n THEN
+	MAIN.AC9999C.mode := 0; // concentration control in manual
+	MAIN.P9999A.nRun_RQ := 0; //stop pump
+	MAIN.P9999B.nRun_RQ := 0; //stop pump
+	start := FALSE;
+	i := 0;
+END_IF
+MAIN.logActive := FALSE;
 ]]></ST>
       </Implementation>
     </Action>

@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <POU Name="fShiftArray" Id="{46f578ef-0c43-4c9c-9606-e5f255ef0a36}" SpecialFunc="None">
+    <Declaration><![CDATA[FUNCTION fShiftArray : BOOL
+VAR_INPUT
+	sizeofArrayElement : UDINT; // size of datatype in array (count of bytes)
+	pInsertedElement : POINTER TO BYTE; // new data
+	
+	sizeofArray : UDINT; // size of array
+	pArray : POINTER TO BYTE; // start of array
+END_VAR
+VAR
+END_VAR
+]]></Declaration>
+    <Implementation>
+      <ST><![CDATA[//Shifts all elements of an array up one index, then inserts new data into 1st element
+//Top element of array is overwritten
+
+//Move elements 1 through (n-1) into 2 through n
+MemMove(destAddr := (pArray + sizeofArrayElement), srcAddr := pArray, n := (sizeofArray - sizeofArrayElement));
+
+//Move new element into first spot of array
+MemMove(destAddr := pArray, srcAddr := pInsertedElement, n := sizeofArrayElement);
+
+//Old FW_MemMove command - cannot find documentation about htis version of the command.
+//FW_MemMove(pDest := pArray + sizeofArrayElement, pSrc := pArray, cbLen := sizeofArray - sizeofArrayElement);
+//FW_MemMove(pDest := pArray, pSrc := pInsertedElement, cbLen := sizeofArrayElement);]]></ST>
+    </Implementation>
+  </POU>
+</TcPlcObject>

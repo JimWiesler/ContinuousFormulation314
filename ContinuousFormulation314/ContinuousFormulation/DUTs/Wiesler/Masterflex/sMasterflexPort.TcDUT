@@ -45,7 +45,7 @@ STRUCT
 	//			  25 (4.8mm, 3/16"), 17 (6.4mm, 1/4"), 18 (7.9mm, 5/16")
 	nTubeSize :INT := 13;		//Tube Number
 	nHeads : INT := 2;			//Number of heads
-	fPeriodMS : LREAL := 0.0;	//Period between pulses in milliseconds
+	fPeriodMS : LREAL := 1.0;	//Period between pulses in milliseconds
 	
 	
 END_STRUCT

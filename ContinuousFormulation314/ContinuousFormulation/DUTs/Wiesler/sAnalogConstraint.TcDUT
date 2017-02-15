@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="sAnalogConstraint" Id="{6f017044-089d-47e8-a268-3502565c94a6}">
+    <Declaration><![CDATA[TYPE sAnalogConstraint :
+STRUCT
+	sp : LREAL := 0.0;  //value to be sent to controller
+	rq : LREAL := 0.0;  //request from HMI or calculations
+	mn : LREAL := 0.0;  //Minimum value
+	mx : LREAL := 0.0;  //Maximum value
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

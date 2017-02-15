@@ -1,0 +1,14 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="elementStatus" Id="{b682ee42-3264-4a62-ad0c-29f8d3426a73}">
+    <Declaration><![CDATA[TYPE elementStatus :
+(
+    Bad := 0,
+    Timeout := 1,
+	Unknown := 11,
+    Good := 12
+);
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

@@ -18,7 +18,7 @@ END_VAR
       <ST><![CDATA[thisCount := UDINT_TO_INT(rawCount - lastCount);
 lastcount := rawCount;
 
-pv := scale.euLo + (thisCount - scale.rawLo)*(scale.euHi - scale.euLo)/(scale.rawHi - scale.rawLo);
+SonotecFreq.pv := scale.euLo + (thisCount - scale.rawLo)*(scale.euHi - scale.euLo)/(scale.rawHi - scale.rawLo);
 ]]></ST>
     </Implementation>
   </POU>

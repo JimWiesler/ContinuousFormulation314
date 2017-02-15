@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TcPlcObject Version="1.1.0.1" ProductVersion="3.1.0.36">
+  <DUT Name="ControllerData" Id="{c1effb05-5d2f-454f-9607-283eaceb69ad}">
+    <Declaration><![CDATA[TYPE ControllerData :
+STRUCT
+	Kp : LREAL := 1.0; //Gain
+	Ti : TIME := T#5S; //Integral time
+	execTime : TIME := T#500MS; //Time between controller executions
+END_STRUCT
+END_TYPE
+]]></Declaration>
+  </DUT>
+</TcPlcObject>

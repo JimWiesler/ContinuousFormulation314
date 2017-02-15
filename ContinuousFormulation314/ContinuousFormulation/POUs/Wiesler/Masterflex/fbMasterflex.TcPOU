@@ -9,8 +9,7 @@ END_VAR
 VAR
 	//Pump control
 	fbPumpControl : fbMasterflexControl;
-	m : LREAL;
-	b : LREAL;
+	lastPeriodMS : LREAL := 1.0;
 END_VAR
 
 VAR_IN_OUT
@@ -18,24 +17,17 @@ VAR_IN_OUT
 END_VAR
 ]]></Declaration>
     <Implementation>
-      <ST><![CDATA[//Translate flow setpoint request to RPM
-IF sPort.fFlowSP_RQ >= 0.0 THEN
-	sPort.fSpeedSP_RQ := MasterflexFlow2Speed(flow := sPort.fFlowSP_RQ, sPort := sPort);
-	sPort.fFlowSP_RQ := -100;
-END_IF
-
-//Call pump serial port handler
+      <ST><![CDATA[//Call pump serial port handler
 fbPumpControl(sPort := sPort);
 
 //Calculate derived values
-sPort.fFlowSP := MasterflexSpeed2Flow(speed := sPort.fSpeedSP, sPort := sPort);
-sPort.fFlowPV := MasterflexSpeed2Flow(speed := sPort.fSpeedPV, sPort := sPort);
 IF sPort.fSpeedPV >= 0.1 THEN
 	sPort.fPeriodMS := 60000.0/INT_TO_LREAL(sPort.nHeads)/4.0/sPort.fSpeedPV;
 ELSE
-	sPort.fPeriodMS := 1000.0; //avoid divide by zero
+	sPort.fPeriodMS := MIN(lastPeriodMS, 1.0); //avoid divide by zero
 END_IF
-]]></ST>
+
+lastPeriodMS := sPort.fPeriodMS;]]></ST>
     </Implementation>
   </POU>
 </TcPlcObject>
